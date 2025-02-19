@@ -13,6 +13,8 @@ HOST_URL = "http://localhost:8080"
 CLIENT_URL = "http://localhost:3000"
 
 class SessionManager:
+    """Класс для получении инфы о сессии"""
+
     def __init__(self):
         """Класс для получении инфы о сессии"""
         self.session_token = None
@@ -192,10 +194,10 @@ def format_meetings(grouped_meetings):
             formatted_start_time = start_time.strftime("%H:%M")
             formatted_end_time = end_time.strftime("%H:%M")
             response += f"{formatted_start_time}"
-            +f" - {formatted_end_time}\nНазвание: {meeting['name']}\n"
+            response += f" - {formatted_end_time}\nНазвание: {meeting['name']}\n"
             response += f"Описание: {meeting['description']}\n"
             response += f"Студент: {meeting['student']['name']},"
-            +f" Курс: {meeting['student']['cource']}\n"
+            response += f" Курс: {meeting['student']['cource']}\n"
             response += f"{'Онлайн' if meeting['is_online'] else 'Оффлайн'}\n\n"
         response += "\n"
         alldays.append(response)
@@ -715,7 +717,8 @@ def handle_project_statisctics(call):
                         criteria_grade = criteria.get("grade", "Не указано")
                         criteria_weight = criteria.get("weight", "Не указано")
                         stats_message += f"- {criteria_name}:"
-                        +f" Оценка {criteria_grade} (Вес: {criteria_weight})\n"
+                        stats_message += f" Оценка {criteria_grade}"
+                        stats_message += f" (Вес: {criteria_weight})\n"
         else:
             stats_message += "Оценки отсутствуют.\n"
 
@@ -780,7 +783,6 @@ def get_repohub():
         integrations_data = integrations.json()  # Преобразуем в JSON
         if len(integrations_data["repo_hubs"]) > 0:
             return integrations_data["repo_hubs"]
-        return None
     else:
         print(f"Ошибка при получении интеграций: {integrations.status_code}")
         return None
