@@ -703,7 +703,8 @@ def format_grades(grades):
                 criteria_name = criteria.get("criteria", "Не указано")
                 criteria_grade = criteria.get("grade", "Не указано")
                 criteria_weight = criteria.get("weight", "Не указано")
-                grades_message += f"- {criteria_name}: Оценка {criteria_grade} (Вес: {criteria_weight})\n"
+                grades_message += f"- {criteria_name}:" 
+                grades_message += f" Оценка {criteria_grade} (Вес: {criteria_weight})\n"
 
     return grades_message
 
