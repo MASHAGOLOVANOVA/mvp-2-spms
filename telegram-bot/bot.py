@@ -16,13 +16,13 @@ CLIENT_URL = "http://localhost:3000"
 SESSION_TOKEN = ""
 
 
-# Функция для обновления session_token
+"""# Функция для обновления session_token"""
 def update_session_token(new_token):
     global SESSION_TOKEN
     SESSION_TOKEN = new_token
 
 
-# Функция для получения заголовков с актуальным session_token
+"""# Функция для получения заголовков с актуальным session_token"""
 def get_headers():
     return {
         "Content-Type": "application/json",
@@ -37,6 +37,7 @@ BOT_TOKEN = "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 
+"""Хендлер команды start"""
 @bot.message_handler(commands=["start"])
 def start_message(message):
     # Создаем кнопку для запроса номера телефона
@@ -53,6 +54,7 @@ def start_message(message):
     )
 
 
+"""Хендлер contact"""
 @bot.message_handler(content_types=["contact"])
 def handle_contact(message):
     contact = message.contact
@@ -64,6 +66,7 @@ def handle_contact(message):
     verify_number(message, credentials)
 
 
+"""функция открытия главного меню"""
 def show_main_menu(chat_id):
     # Создаем главное меню
     keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -86,6 +89,7 @@ def show_main_menu(chat_id):
     bot.send_message(chat_id, "Выберите действие:", reply_markup=keyboard)
 
 
+"""Хендлер проектов"""
 @bot.message_handler(func=lambda message: message.text == "Мои проекты")
 def handle_projects(message):
     try:
@@ -125,6 +129,7 @@ def handle_projects(message):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
+"""Хендлер встреч"""
 @bot.message_handler(func=lambda message: message.text == "Мои встречи")
 def handle_meetings(message):
     meetings = get_schedule()
@@ -147,6 +152,7 @@ days_translation = {
 }
 
 
+"""функция для группировки встреч"""
 def group_meetings_by_day(meetings):
     grouped = {}
     for meeting in meetings:
@@ -160,6 +166,7 @@ def group_meetings_by_day(meetings):
     return grouped
 
 
+"""функция для форматирования встреч"""
 def format_meetings(grouped_meetings):
     alldays = []
     for day, meetings in grouped_meetings.items():
@@ -184,6 +191,7 @@ def format_meetings(grouped_meetings):
     return alldays
 
 
+"""функция для получения расписания"""
 def get_schedule():
     # Получаем текущую дату в формате ISO 8601
 
@@ -207,6 +215,7 @@ def get_schedule():
     return []
 
 
+"""функция для поиска номера в системе"""
 def verify_number(message, credentials):
     try:
         bot.send_message(message.chat.id, "Проверяем регистрацию...")
@@ -246,6 +255,7 @@ def verify_number(message, credentials):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
+"""функция для получения аккаунта"""
 def get_account(message):
     response = requests.get(f"{HOST_URL}/api/v1/account", headers=get_headers())
     if response.status_code == 200:
@@ -254,6 +264,7 @@ def get_account(message):
     return []
 
 
+"""функция для получения интеграций"""
 def get_integrations():
     integrations_response = requests.get(
         f"{HOST_URL}/api/v1/account/integrations", headers=get_headers()
@@ -261,6 +272,7 @@ def get_integrations():
     return integrations_response
 
 
+"""функция для получения интеграции с диском"""
 def get_cloud_drive():
     integrations = get_integrations()
     try:
@@ -274,6 +286,7 @@ def get_cloud_drive():
         return None
 
 
+"""функция для получения интеграции с планнером"""
 def get_google_planner():
     integrations = get_integrations()
     print(integrations.text)
@@ -291,6 +304,7 @@ def get_google_planner():
         return None
 
 
+"""Хендлер команды Добавить проект"""
 @bot.message_handler(func=lambda message: message.text == "Добавить проект")
 def add_project(message):
     students = get_students()
@@ -318,6 +332,7 @@ def add_project(message):
     bot.register_next_step_handler(message, process_student_selection)
 
 
+"""функция для выбора студента"""
 def process_student_selection(message):
     student_name = message.text
     # Здесь вы можете добавить проверку на наличие выбранного студента в списке
@@ -342,6 +357,7 @@ def process_student_selection(message):
     )
 
 
+"""функция для выбора темы проекта"""
 def process_project_theme(message, student):
     project_theme = message.text
     bot.send_message(message.chat.id, "Введите год проекта (число):")
@@ -350,6 +366,7 @@ def process_project_theme(message, student):
     )
 
 
+"""функция для выбора года проекта"""
 def process_project_year(message, student, project_theme):
     try:
         project_year = int(message.text)
@@ -365,6 +382,7 @@ def process_project_year(message, student, project_theme):
         process_project_year(message, student, project_theme)
 
 
+"""функция для выбора владельца проекта"""
 def process_repo_owner(message, student, project_theme, project_year):
     repo_owner = message.text
     bot.send_message(message.chat.id, "Введите имя репозитория:")
@@ -376,6 +394,7 @@ def process_repo_owner(message, student, project_theme, project_year):
     )
 
 
+"""функция для ввода имени репозитория"""
 def process_repository_name(message, student, project_theme, project_year, repo_owner):
     repository_name = message.text
 
@@ -406,6 +425,7 @@ def process_repository_name(message, student, project_theme, project_year, repo_
     show_main_menu(message.chat.id)
 
 
+"""функция для получения студентов"""
 # Предполагается, что у вас есть функция для получения списка студентов
 def get_students():
     response = requests.get(f"{HOST_URL}/api/v1/students", headers=get_headers())
@@ -416,6 +436,8 @@ def get_students():
     return []
 
 
+
+"""функция для получения учебных программ"""
 def get_educational_programmes():
     response = requests.get(
         f"{HOST_URL}/api/v1/universities/1/edprogrammes/", headers=get_headers()
@@ -427,6 +449,8 @@ def get_educational_programmes():
     return []
 
 
+
+"""функция для ввода имени студента"""
 def add_student_name(message):
     student_name = message.text
     bot.send_message(message.chat.id, "Введите фамилию нового студента:")
@@ -435,6 +459,7 @@ def add_student_name(message):
     )
 
 
+"""функция для ввода фамилии студента"""
 def add_student_surname(message, student_name):
     student_surname = message.text
     bot.send_message(message.chat.id, "Введите отчество нового студента:")
@@ -443,6 +468,7 @@ def add_student_surname(message, student_name):
     )
 
 
+"""функция для ввода отчества студента"""
 def add_student_middlename(message, student_name, student_surname):
     student_middlename = message.text
     bot.send_message(message.chat.id, "Введите курс нового студента (число):")
@@ -454,6 +480,7 @@ def add_student_middlename(message, student_name, student_surname):
     )
 
 
+"""функция для ввода курса студента"""
 def add_student_course(message, student_name, student_surname, student_middlename):
     try:
         student_course = int(message.text)
@@ -489,6 +516,7 @@ def add_student_course(message, student_name, student_surname, student_middlenam
         add_student_course(message, student_name, student_surname, student_middlename)
 
 
+"""функция для ввода уч программы студента"""
 def add_student_programme(
     message, student_name, student_surname, student_middlename, student_course
 ):
@@ -537,6 +565,7 @@ def add_student_programme(
         show_main_menu(message.chat.id)
 
 
+"""Хендлер для просмотра информации о проекте"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("project_"))
 def handle_project_details(call):
     project_id = call.data.split("_")[1]
@@ -625,6 +654,7 @@ def handle_project_details(call):
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
 
 
+"""Хендлер для просмотра статистики по проекту"""
 @bot.callback_query_handler(
     func=lambda call: call.data.startswith("statistics_project_")
 )
@@ -689,6 +719,7 @@ def handle_project_statisctics(call):
         )
 
 
+"""Хендлер для просмотра коммитов по проекту"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("commits_project_"))
 def handle_project_commits(call):
     project_id = call.data.split("_")[2]
@@ -740,6 +771,7 @@ def handle_project_commits(call):
         )
 
 
+"""функция для получения интеграции с гитхабом"""
 def get_repoHub():
     integrations = get_integrations()
     # Преобразуем ответ в JSON
@@ -754,6 +786,7 @@ def get_repoHub():
         return None
 
 
+"""Хендлер для добавления задачи"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("add_task_project_"))
 def handle_project_new_task(call):
     project_id = call.data.split("_")[3]
@@ -763,6 +796,7 @@ def handle_project_new_task(call):
     bot.register_next_step_handler(call.message, process_task_name, project_id)
 
 
+"""функция для получения названия задачи"""
 def process_task_name(message, project_id):
     task_name = message.text  # Получаем название задачи
 
@@ -773,6 +807,7 @@ def process_task_name(message, project_id):
     )
 
 
+"""функция для получения описания задачи"""
 def process_task_description(message, project_id, task_name):
     task_description = message.text  # Получаем описание задачи
 
@@ -785,6 +820,7 @@ def process_task_description(message, project_id, task_name):
     )
 
 
+"""функция для получения дедлайна задачи"""
 def process_task_deadline(message, project_id, task_name, task_description):
     task_deadline_input = message.text  # Получаем дедлайн задачи
     try:
@@ -820,6 +856,7 @@ def process_task_deadline(message, project_id, task_name, task_description):
         )
 
 
+"""Хендлер для получения задач проекта"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("tasks_project_"))
 def handle_project_new_task(call):
     project_id = call.data.split("_")[2]
@@ -867,6 +904,7 @@ def handle_project_new_task(call):
         )
 
 
+"""Хендлер для добавления встречи по проекту"""
 @bot.callback_query_handler(
     func=lambda call: call.data.startswith("add_meeting_project_")
 )
@@ -881,6 +919,7 @@ def handle_project_new_meeting(call):
     )
 
 
+"""функция для получения названия встречи"""
 def process_meeting_name(message, project_id, student_id):
     name = message.text  # Получаем название
 
@@ -891,6 +930,7 @@ def process_meeting_name(message, project_id, student_id):
     )
 
 
+"""функция для получения описания встречи"""
 def process_meeting_description(message, project_id, student_id, name):
     desc = message.text  # Получаем название
 
@@ -901,6 +941,7 @@ def process_meeting_description(message, project_id, student_id, name):
     )
 
 
+"""функция для получения времени встречи"""
 def process_meeting_time(message, project_id, student_id, name, desc):
     time = message.text  # Получаем название встречи
 
@@ -915,6 +956,7 @@ def process_meeting_time(message, project_id, student_id, name, desc):
     )
 
 
+"""функция для получения доски для выбора формата встречи"""
 def get_meeting_format_markup():
     markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
     button_online = telebot.types.KeyboardButton("Онлайн")
@@ -923,6 +965,7 @@ def get_meeting_format_markup():
     return markup
 
 
+"""функция для получения формата встречи"""
 def process_meeting_format(message, project_id, student_id, name, desc, time):
     meeting_format = message.text  # Получаем формат встречи
 
