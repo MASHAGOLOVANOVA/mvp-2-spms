@@ -242,7 +242,7 @@ def verify_number(message, credentials):
             # Обновляем session_token, если он присутствует в ответе
             if "session_token" in response_data:
                 update_session_token(response_data["session_token"])
-                professor = get_account(message)
+                professor = get_account()
                 bot.send_message(message.chat.id, f'Здравствуйте, {professor["name"]}!')
                 cloud_drive = get_cloud_drive()
                 if cloud_drive is not None:
@@ -543,7 +543,6 @@ def add_student_programme(
         (ep for ep in educational_programmes if ep["name"] == selected_programme_name),
         None,
     )
-
     if selected_programme is None:
         bot.send_message(
             message.chat.id,
@@ -560,14 +559,12 @@ def add_student_programme(
         "cource": student_course,
         "education_programme_id": selected_programme["id"],
     }
-
     response = requests.post(
         f"{HOST_URL}/api/v1/students/add",
         json=new_student_data,
         headers=sessionManager.get_headers(),
         timeout=10,
     )
-
     if response.status_code == 200:
         bot.send_message(
             message.chat.id,
@@ -640,7 +637,6 @@ def handle_project_details(call):
             callback_data="add_meeting_project_"
             + f"{project_details['id']}_student_{project_details['student']['id']}",
         )
-
         if get_repohub() is not None:
             markup.add(button1, button2, button3, button4, button5)
         else:
@@ -652,7 +648,6 @@ def handle_project_details(call):
                 parse_mode="HTML",
             )
             markup.add(button1, button3, button4, button5)
-
         bot.send_message(
             call.message.chat.id,
             details_message,
@@ -665,6 +660,52 @@ def handle_project_details(call):
             f"Ошибка при получении деталей проекта: {response.status_code}",
         )
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
+
+
+def format_statistics_message(statistics):
+    """Форматирует сообщение со статистикой проекта."""
+    total_meetings = statistics.get("total_meetings", 0)
+    total_tasks = statistics.get("total_tasks", 0)
+    tasks_done = statistics.get("tasks_done", 0)
+    tasks_done_percent = statistics.get("tasks_done_percent", 0)
+
+    stats_message = (
+        "*Статистика по проекту:*\n\n"
+        f"📅 *Общее количество встреч:* {total_meetings}\n"
+        f"📋 *Общее количество задач:* {total_tasks}\n"
+        f"✅ *Завершенные задачи:* {tasks_done} ({tasks_done_percent}%)\n\n"
+    )
+
+    grades = statistics.get("grades", {})
+    if grades:
+        stats_message += format_grades(grades)
+    else:
+        stats_message += "Оценки отсутствуют.\n"
+    return stats_message
+
+def format_grades(grades):
+    """Форматирует сообщение с оценками."""
+    defence_grade = grades.get("defence_grade", "Нет оценки")
+    supervisor_grade = grades.get("supervisor_grade", "Нет оценки")
+    final_grade = grades.get("final_grade", "Нет оценки")
+    supervisor_review = grades.get("supervisor_review", {})
+    grades_message = (
+        "*Оценки:*\n"
+        f"🎓 *Защита:* {defence_grade}\n"
+        f"👨‍🏫 *Оценка руководителя:* {supervisor_grade}\n"
+        f"🏆 *Итоговая оценка:* {final_grade}\n\n"
+    )
+    if supervisor_review:
+        review_criterias = supervisor_review.get("criterias", [])
+        if review_criterias:
+            grades_message += "*Критерии оценки:*\n"
+            for criteria in review_criterias:
+                criteria_name = criteria.get("criteria", "Не указано")
+                criteria_grade = criteria.get("grade", "Не указано")
+                criteria_weight = criteria.get("weight", "Не указано")
+                grades_message += f"- {criteria_name}: Оценка {criteria_grade} (Вес: {criteria_weight})\n"
+
+    return grades_message
 
 
 @bot.callback_query_handler(
@@ -681,47 +722,7 @@ def handle_project_statisctics(call):
 
     if response.status_code == 200:
         statistics = response.json()
-
-        total_meetings = statistics.get("total_meetings", 0)
-        total_tasks = statistics.get("total_tasks", 0)
-        tasks_done = statistics.get("tasks_done", 0)
-        tasks_done_percent = statistics.get("tasks_done_percent", 0)
-
-        stats_message = (
-            "*Статистика по проекту:*\n\n"
-            f"📅 *Общее количество встреч:* {total_meetings}\n"
-            f"📋 *Общее количество задач:* {total_tasks}\n"
-            f"✅ *Завершенные задачи:* {tasks_done} ({tasks_done_percent}%)\n\n"
-        )
-
-        grades = statistics.get("grades", {})
-        if grades:
-            defence_grade = grades.get("defence_grade", "Нет оценки")
-            supervisor_grade = grades.get("supervisor_grade", "Нет оценки")
-            final_grade = grades.get("final_grade", "Нет оценки")
-            supervisor_review = grades.get("supervisor_review", {})
-
-            stats_message += (
-                "*Оценки:*\n"
-                f"🎓 *Защита:* {defence_grade}\n"
-                f"👨‍🏫 *Оценка руководителя:* {supervisor_grade}\n"
-                f"🏆 *Итоговая оценка:* {final_grade}\n\n"
-            )
-
-            if supervisor_review:
-                review_criterias = supervisor_review.get("criterias", [])
-                if review_criterias:
-                    stats_message += "*Критерии оценки:*\n"
-                    for criteria in review_criterias:
-                        criteria_name = criteria.get("criteria", "Не указано")
-                        criteria_grade = criteria.get("grade", "Не указано")
-                        criteria_weight = criteria.get("weight", "Не указано")
-                        stats_message += f"- {criteria_name}:"
-                        stats_message += f" Оценка {criteria_grade}"
-                        stats_message += f" (Вес: {criteria_weight})\n"
-        else:
-            stats_message += "Оценки отсутствуют.\n"
-
+        stats_message = format_statistics_message(statistics)
         bot.send_message(call.message.chat.id, stats_message, parse_mode="Markdown")
     else:
         bot.send_message(
@@ -729,19 +730,29 @@ def handle_project_statisctics(call):
             f"Ошибка при получении статистики проекта: {response.status_code}",
         )
 
+def format_commit_message(commit):
+    """Форматирует сообщение о коммите."""
+    commit_sha = commit.get("commit_sha", "Не указано")
+    message = commit.get("message", "Не указано")
+    date_created = commit.get("date_created", "Не указано")
+    created_by = commit.get("created_by", "Не указано")
+    formatted_date = datetime.fromisoformat(date_created[:-1]).strftime("%Y-%m-%d %H:%M:%S")
+    return (
+        f"🔹 *SHA:* {commit_sha}\n"
+        f"📝 *Сообщение:* {message}\n"
+        f"📅 *Дата создания:* {formatted_date}\n"
+        f"👤 *Создано пользователем:* {created_by}\n\n"
+    )
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("commits_project_"))
 def handle_project_commits(call):
     """Хендлер для просмотра коммитов по проекту"""
     project_id = call.data.split("_")[2]
-    current_time = datetime.utcnow()
-    current_time -= timedelta(days=30)
+    current_time = datetime.utcnow() - timedelta(days=30)
     month_ago = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
 
     iso_format_time = month_ago.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-
     url = f"{HOST_URL}/api/v1/projects/{project_id}/commits?from={iso_format_time}"
-
     response = requests.get(url, headers=sessionManager.get_headers(), timeout=10)
     if response.status_code == 200:
         commits_data = response.json()
@@ -750,23 +761,9 @@ def handle_project_commits(call):
         if commits:
             commits_message = "*Коммиты проекта:*\n\n"
             for commit in commits:
-                commit_sha = commit.get("commit_sha", "Не указано")
-                message = commit.get("message", "Не указано")
-                date_created = commit.get("date_created", "Не указано")
-                created_by = commit.get("created_by", "Не указано")
+                commits_message += format_commit_message(commit)
 
-                formatted_date = datetime.fromisoformat(date_created[:-1]).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-
-                commits_message += f"🔹 *SHA:* `{commit_sha}`\n"
-                commits_message += f"📝 *Сообщение:* {message}\n"
-                commits_message += f"📅 *Дата создания:* {formatted_date}\n"
-                commits_message += f"👤 *Создано пользователем:* {created_by}\n\n"
-
-            bot.send_message(
-                call.message.chat.id, commits_message, parse_mode="Markdown"
-            )
+            bot.send_message(call.message.chat.id, commits_message, parse_mode="Markdown")
         else:
             bot.send_message(call.message.chat.id, "Коммиты отсутствуют.")
     else:
