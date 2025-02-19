@@ -51,7 +51,7 @@ def start_message(message):
     """Хендлер команды start"""
     # Создаем кнопку для запроса номера телефона
     keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    button = telebot.KeyboardButton("Отправить номер телефона", request_contact=True)
+    button = telebot.types.KeyboardButton("Отправить номер телефона", request_contact=True)
     keyboard.add(button)
 
     bot.send_message(
@@ -637,7 +637,7 @@ def handle_project_details(call):
         )
         button5 = telebot.types.InlineKeyboardButton(
             "Назначить встречу",
-            callback_data=f"add_meeting_project_"
+            callback_data="add_meeting_project_"
             + f"{project_details['id']}_student_{project_details['student']['id']}",
         )
 
@@ -783,9 +783,8 @@ def get_repohub():
         integrations_data = integrations.json()  # Преобразуем в JSON
         if len(integrations_data["repo_hubs"]) > 0:
             return integrations_data["repo_hubs"]
-    else:
-        print(f"Ошибка при получении интеграций: {integrations.status_code}")
-        return None
+    print(f"Ошибка при получении интеграций: {integrations.status_code}")
+    return None
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("add_task_project_"))
