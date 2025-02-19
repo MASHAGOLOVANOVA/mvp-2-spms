@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Этот модуль реализует функциональность бота Telegram."""
+     
+
 import telebot
 import requests
 import json
@@ -672,7 +675,8 @@ def handle_project_statisctics(call):
                         criteria_name = criteria.get("criteria", "Не указано")
                         criteria_grade = criteria.get("grade", "Не указано")
                         criteria_weight = criteria.get("weight", "Не указано")
-                        stats_message += f"- {criteria_name}: Оценка {criteria_grade} (Вес: {criteria_weight})\n"
+                        stats_message += f"- {criteria_name}:"
+                        +f" Оценка {criteria_grade} (Вес: {criteria_weight})\n"
         else:
             stats_message += "Оценки отсутствуют.\n"
 
