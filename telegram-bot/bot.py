@@ -11,24 +11,29 @@ HOST_URL = "http://localhost:8080"
 
 CLIENT_URL = "http://localhost:3000"
 
-# Инициализация session_token
-SESSION_TOKEN = ""
+
+class SessionManager:
+    def __init__(self):
+        self.session_token = None
+
+    def set_session_token(self, token):
+        self.session_token = token
+
+    def get_headers(self):
+        return {
+            "Content-Type": "application/json",
+            "Bot-Token": "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI",
+            "tuna-skip-browser-warning": "please",
+            "Session-Id": self.session_token,
+        }
+
+
+sessionManager = SessionManager() 
 
 
 def update_session_token(new_token):
     """# Функция для обновления session_token"""
-    global SESSION_TOKEN
-    SESSION_TOKEN = new_token
-
-
-def get_headers():
-    """# Функция для получения заголовков с актуальным session_token"""
-    return {
-        "Content-Type": "application/json",
-        "Bot-Token": "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI",
-        "tuna-skip-browser-warning": "please",
-        "Session-Id": SESSION_TOKEN,
-    }
+    sessionManager.set_session_token(new_token)
 
 
 BOT_TOKEN = "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI"
@@ -93,7 +98,7 @@ def handle_projects(message):
     """Хендлер проектов"""
     try:
         response = requests.get(
-            f"{HOST_URL}/api/v1/projects/", headers=get_headers(), timeout=10
+            f"{HOST_URL}/api/v1/projects/", headers=sessionManager.get_headers(), timeout=10
         )
 
         # Проверяем статус ответа
@@ -203,7 +208,7 @@ def get_schedule():
     url = f"{HOST_URL}/api/v1/meetings?from={iso_format_time}"
 
     # Выполняем GET-запрос
-    response = requests.get(url, headers=get_headers(), timeout=10)
+    response = requests.get(url, headers=sessionManager.get_headers(), timeout=10)
     if response.status_code == 200:
         response_data = response.json()
         print(response_data)
@@ -219,7 +224,7 @@ def verify_number(message, credentials):
         response = requests.post(
             HOST_URL + "/api/v1/auth/bot/signinuser",
             json=credentials,
-            headers=get_headers(),
+            headers=sessionManager.get_headers(),
             timeout=10,
         )
         if response.status_code == 200:
@@ -233,7 +238,7 @@ def verify_number(message, credentials):
                 professor = get_account(message)
                 bot.send_message(message.chat.id, f'Здравствуйте, {professor["name"]}!')
                 cloud_drive = get_cloud_drive()
-                if cloud_drive != None:
+                if cloud_drive is not None:
                     show_main_menu(message.chat.id)
                 else:
                     bot.send_message(
@@ -256,7 +261,7 @@ def verify_number(message, credentials):
 def get_account(message):
     """функция для получения аккаунта"""
     response = requests.get(
-        f"{HOST_URL}/api/v1/account", headers=get_headers(), timeout=10
+        f"{HOST_URL}/api/v1/account", headers=sessionManager.get_headers(), timeout=10
     )
     if response.status_code == 200:
         account = response.json()
@@ -267,7 +272,7 @@ def get_account(message):
 def get_integrations():
     """функция для получения интеграций"""
     integrations_response = requests.get(
-        f"{HOST_URL}/api/v1/account/integrations", headers=get_headers(), timeout=10
+        f"{HOST_URL}/api/v1/account/integrations", headers=sessionManager.get_headers(), timeout=10
     )
     return integrations_response
 
@@ -407,7 +412,7 @@ def process_repository_name(message, student, project_theme, project_year, repo_
             "repository_owner_login": repo_owner,
             "repository_name": repository_name,
         },
-        headers=get_headers(),
+        headers=sessionManager.get_headers(),
         timeout=10,
     )
 
@@ -429,7 +434,7 @@ def process_repository_name(message, student, project_theme, project_year, repo_
 def get_students():
     """функция для получения студентов"""
     response = requests.get(
-        f"{HOST_URL}/api/v1/students", headers=get_headers(), timeout=10
+        f"{HOST_URL}/api/v1/students", headers=sessionManager.get_headers(), timeout=10
     )
     if response.status_code == 200:
         response_data = response.json()
@@ -442,7 +447,7 @@ def get_educational_programmes():
     """функция для получения учебных программ"""
     response = requests.get(
         f"{HOST_URL}/api/v1/universities/1/edprogrammes/",
-        headers=get_headers(),
+        headers=sessionManager.get_headers(),
         timeout=10,
     )
     if response.status_code == 200:
@@ -550,7 +555,7 @@ def add_student_programme(
     response = requests.post(
         f"{HOST_URL}/api/v1/students/add",
         json=new_student_data,
-        headers=get_headers(),
+        headers=sessionManager.get_headers(),
         timeout=10,
     )
 
@@ -574,7 +579,7 @@ def add_student_programme(
 def handle_project_details(call):
     """Хендлер для просмотра информации о проекте"""
     project_id = call.data.split("_")[1]
-    headers = get_headers()
+    headers = sessionManager.get_headers()
     response = requests.get(
         f"{HOST_URL}/api/v1/projects/{project_id}", headers=headers, timeout=10
     )
@@ -662,7 +667,7 @@ def handle_project_statisctics(call):
     project_id = call.data.split("_")[2]
     response = requests.get(
         f"{HOST_URL}/api/v1/projects/{project_id}/statistics",
-        headers=get_headers(),
+        headers=sessionManager.get_headers(),
         timeout=10,
     )
 
@@ -728,7 +733,7 @@ def handle_project_commits(call):
 
     url = f"{HOST_URL}/api/v1/projects/{project_id}/commits?from={iso_format_time}"
 
-    response = requests.get(url, headers=get_headers(), timeout=10)
+    response = requests.get(url, headers=sessionManager.get_headers(), timeout=10)
     if response.status_code == 200:
         commits_data = response.json()
         commits = commits_data.get("commits", [])
@@ -823,7 +828,7 @@ def process_task_deadline(message, project_id, task_name, task_description):
         url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks/add"
 
         response = requests.post(
-            url, json=new_task_data, headers=get_headers(), timeout=10
+            url, json=new_task_data, headers=sessionManager.get_headers(), timeout=10
         )
 
         if response.status_code == 200:
@@ -847,7 +852,7 @@ def handle_project_new_task(call):
     project_id = call.data.split("_")[2]
     url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks"
 
-    response = requests.get(url, headers=get_headers(), timeout=10)
+    response = requests.get(url, headers=sessionManager.get_headers(), timeout=10)
 
     if response.status_code == 200:
         tasks_data = response.json()
@@ -974,7 +979,7 @@ def process_meeting_format(message, project_id, student_id, name, desc, time):
 
         url = f"{HOST_URL}/api/v1/meetings/add"
         response = requests.post(
-            url, json=new_meeting_data, headers=get_headers(), timeout=10
+            url, json=new_meeting_data, headers=sessionManager.get_headers(), timeout=10
         )
 
         if response.status_code == 200:
