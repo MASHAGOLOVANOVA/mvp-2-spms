@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Этот модуль реализует функциональность бота Telegram."""
 
-
-import telebot
-import requests
 import json
 from datetime import datetime, timedelta
+import telebot
+import requests
 from telegram.constants import ParseMode
 
 HOST_URL = "http://localhost:8080"
@@ -22,7 +21,6 @@ def update_session_token(new_token):
     SESSION_TOKEN = new_token
 
 
-
 def get_headers():
     """# Функция для получения заголовков с актуальным session_token"""
     return {
@@ -36,7 +34,6 @@ def get_headers():
 BOT_TOKEN = "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI"
 # Создаем экземпляр бота
 bot = telebot.TeleBot(BOT_TOKEN)
-
 
 
 @bot.message_handler(commands=["start"])
@@ -56,7 +53,6 @@ def start_message(message):
     )
 
 
-
 @bot.message_handler(content_types=["contact"])
 def handle_contact(message):
     """Хендлер contact"""
@@ -67,7 +63,6 @@ def handle_contact(message):
     # Создаем данные для отправки на сервер
     credentials = {"phone_number": phone_number}
     verify_number(message, credentials)
-
 
 
 def show_main_menu(chat_id):
@@ -93,12 +88,13 @@ def show_main_menu(chat_id):
     bot.send_message(chat_id, "Выберите действие:", reply_markup=keyboard)
 
 
-
 @bot.message_handler(func=lambda message: message.text == "Мои проекты")
 def handle_projects(message):
     """Хендлер проектов"""
     try:
-        response = requests.get(f"{HOST_URL}/api/v1/projects/", headers=get_headers())
+        response = requests.get(
+            f"{HOST_URL}/api/v1/projects/", headers=get_headers(), timeout=10
+        )
 
         # Проверяем статус ответа
         if response.status_code == 200:
@@ -134,7 +130,6 @@ def handle_projects(message):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
-
 @bot.message_handler(func=lambda message: message.text == "Мои встречи")
 def handle_meetings(message):
     """Хендлер встреч"""
@@ -158,7 +153,6 @@ days_translation = {
 }
 
 
-
 def group_meetings_by_day(meetings):
     """функция для группировки встреч"""
     grouped = {}
@@ -171,7 +165,6 @@ def group_meetings_by_day(meetings):
             grouped[day] = []
         grouped[day].append(meeting)
     return grouped
-
 
 
 def format_meetings(grouped_meetings):
@@ -199,7 +192,6 @@ def format_meetings(grouped_meetings):
     return alldays
 
 
-
 def get_schedule():
     """функция для получения расписания"""
     current_time = datetime.utcnow()
@@ -211,14 +203,13 @@ def get_schedule():
     url = f"{HOST_URL}/api/v1/meetings?from={iso_format_time}"
 
     # Выполняем GET-запрос
-    response = requests.get(url, headers=get_headers())
+    response = requests.get(url, headers=get_headers(), timeout=10)
     if response.status_code == 200:
         response_data = response.json()
         print(response_data)
         meetings = response_data.get("meetings", [])
         return meetings
     return []
-
 
 
 def verify_number(message, credentials):
@@ -229,6 +220,7 @@ def verify_number(message, credentials):
             HOST_URL + "/api/v1/auth/bot/signinuser",
             json=credentials,
             headers=get_headers(),
+            timeout=10,
         )
         if response.status_code == 200:
             bot.send_message(message.chat.id, "Мы Вас нашли!")
@@ -261,24 +253,23 @@ def verify_number(message, credentials):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
-
 def get_account(message):
     """функция для получения аккаунта"""
-    response = requests.get(f"{HOST_URL}/api/v1/account", headers=get_headers())
+    response = requests.get(
+        f"{HOST_URL}/api/v1/account", headers=get_headers(), timeout=10
+    )
     if response.status_code == 200:
         account = response.json()
         return account
     return []
 
 
-
 def get_integrations():
     """функция для получения интеграций"""
     integrations_response = requests.get(
-        f"{HOST_URL}/api/v1/account/integrations", headers=get_headers()
+        f"{HOST_URL}/api/v1/account/integrations", headers=get_headers(), timeout=10
     )
     return integrations_response
-
 
 
 def get_cloud_drive():
@@ -313,7 +304,6 @@ def get_google_planner():
         return None
 
 
-
 @bot.message_handler(func=lambda message: message.text == "Добавить проект")
 def add_project(message):
     """Хендлер команды Добавить проект"""
@@ -342,7 +332,6 @@ def add_project(message):
     bot.register_next_step_handler(message, process_student_selection)
 
 
-
 def process_student_selection(message):
     """функция для выбора студента"""
     student_name = message.text
@@ -368,7 +357,6 @@ def process_student_selection(message):
     )
 
 
-
 def process_project_theme(message, student):
     """функция для выбора темы проекта"""
     project_theme = message.text
@@ -376,7 +364,6 @@ def process_project_theme(message, student):
     bot.register_next_step_handler(
         message, lambda msg: process_project_year(msg, student, project_theme)
     )
-
 
 
 def process_project_year(message, student, project_theme):
@@ -395,7 +382,6 @@ def process_project_year(message, student, project_theme):
         process_project_year(message, student, project_theme)
 
 
-
 def process_repo_owner(message, student, project_theme, project_year):
     """функция для выбора владельца проекта"""
     repo_owner = message.text
@@ -406,7 +392,6 @@ def process_repo_owner(message, student, project_theme, project_year):
             msg, student, project_theme, project_year, repo_owner
         ),
     )
-
 
 
 def process_repository_name(message, student, project_theme, project_year, repo_owner):
@@ -423,6 +408,7 @@ def process_repository_name(message, student, project_theme, project_year, repo_
             "repository_name": repository_name,
         },
         headers=get_headers(),
+        timeout=10,
     )
 
     if response.status_code == 200:
@@ -439,11 +425,12 @@ def process_repository_name(message, student, project_theme, project_year, repo_
     show_main_menu(message.chat.id)
 
 
-
 # Предполагается, что у вас есть функция для получения списка студентов
 def get_students():
     """функция для получения студентов"""
-    response = requests.get(f"{HOST_URL}/api/v1/students", headers=get_headers())
+    response = requests.get(
+        f"{HOST_URL}/api/v1/students", headers=get_headers(), timeout=10
+    )
     if response.status_code == 200:
         response_data = response.json()
         students = response_data.get("students", [])
@@ -451,11 +438,12 @@ def get_students():
     return []
 
 
-
 def get_educational_programmes():
     """функция для получения учебных программ"""
     response = requests.get(
-        f"{HOST_URL}/api/v1/universities/1/edprogrammes/", headers=get_headers()
+        f"{HOST_URL}/api/v1/universities/1/edprogrammes/",
+        headers=get_headers(),
+        timeout=10,
     )
     if response.status_code == 200:
         response_data = response.json()
@@ -560,7 +548,10 @@ def add_student_programme(
     }
 
     response = requests.post(
-        f"{HOST_URL}/api/v1/students/add", json=new_student_data, headers=get_headers()
+        f"{HOST_URL}/api/v1/students/add",
+        json=new_student_data,
+        headers=get_headers(),
+        timeout=10,
     )
 
     if response.status_code == 200:
@@ -583,10 +574,10 @@ def add_student_programme(
 def handle_project_details(call):
     """Хендлер для просмотра информации о проекте"""
     project_id = call.data.split("_")[1]
-
-    # Запрос к API для получения деталей проекта
     headers = get_headers()
-    response = requests.get(f"{HOST_URL}/api/v1/projects/{project_id}", headers=headers)
+    response = requests.get(
+        f"{HOST_URL}/api/v1/projects/{project_id}", headers=headers, timeout=10
+    )
 
     if response.status_code == 200:
         project_details = response.json()
@@ -595,8 +586,6 @@ def handle_project_details(call):
         print(student)
         student_str = f"{student['surname']} {student['name']} {student['middlename']}"
         theme = project_details["theme"]
-
-        # Формирование сообщения с деталями проекта
         details_message = (
             "*Тема:* "
             + theme
@@ -651,7 +640,6 @@ def handle_project_details(call):
             )
             markup.add(button1, button3, button4, button5)
 
-        # Отправка сообщения с деталями проекта и кнопками
         bot.send_message(
             call.message.chat.id,
             details_message,
@@ -663,8 +651,6 @@ def handle_project_details(call):
             call.message.chat.id,
             f"Ошибка при получении деталей проекта: {response.status_code}",
         )
-
-    # Удаляем кнопку после нажатия (опционально)
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
 
 
@@ -675,19 +661,19 @@ def handle_project_statisctics(call):
     """Хендлер для просмотра статистики по проекту"""
     project_id = call.data.split("_")[2]
     response = requests.get(
-        f"{HOST_URL}/api/v1/projects/{project_id}/statistics", headers=get_headers()
+        f"{HOST_URL}/api/v1/projects/{project_id}/statistics",
+        headers=get_headers(),
+        timeout=10,
     )
 
     if response.status_code == 200:
         statistics = response.json()
 
-        # Извлечение данных из JSON
         total_meetings = statistics.get("total_meetings", 0)
         total_tasks = statistics.get("total_tasks", 0)
         tasks_done = statistics.get("tasks_done", 0)
         tasks_done_percent = statistics.get("tasks_done_percent", 0)
 
-        # Формирование сообщения
         stats_message = (
             "*Статистика по проекту:*\n\n"
             f"📅 *Общее количество встреч:* {total_meetings}\n"
@@ -695,7 +681,6 @@ def handle_project_statisctics(call):
             f"✅ *Завершенные задачи:* {tasks_done} ({tasks_done_percent}%)\n\n"
         )
 
-        # Обработка оценок
         grades = statistics.get("grades", {})
         if grades:
             defence_grade = grades.get("defence_grade", "Нет оценки")
@@ -710,7 +695,6 @@ def handle_project_statisctics(call):
                 f"🏆 *Итоговая оценка:* {final_grade}\n\n"
             )
 
-            # Обработка критериев
             if supervisor_review:
                 review_criterias = supervisor_review.get("criterias", [])
                 if review_criterias:
@@ -724,7 +708,6 @@ def handle_project_statisctics(call):
         else:
             stats_message += "Оценки отсутствуют.\n"
 
-        # Отправка сообщения с статистикой
         bot.send_message(call.message.chat.id, stats_message, parse_mode="Markdown")
     else:
         bot.send_message(
@@ -738,23 +721,19 @@ def handle_project_commits(call):
     """Хендлер для просмотра коммитов по проекту"""
     project_id = call.data.split("_")[2]
     current_time = datetime.utcnow()
-    # Устанавливаем время на начало сегодняшнего дня
     current_time -= timedelta(days=30)
     month_ago = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Преобразуем в строку формата ISO 8601 с миллисекундами
     iso_format_time = month_ago.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
-    # Формируем URL с параметром from
     url = f"{HOST_URL}/api/v1/projects/{project_id}/commits?from={iso_format_time}"
 
-    response = requests.get(url, headers=get_headers())
+    response = requests.get(url, headers=get_headers(), timeout=10)
     if response.status_code == 200:
         commits_data = response.json()
         commits = commits_data.get("commits", [])
 
         if commits:
-            # Формирование сообщения с коммитами
             commits_message = "*Коммиты проекта:*\n\n"
             for commit in commits:
                 commit_sha = commit.get("commit_sha", "Не указано")
@@ -762,7 +741,6 @@ def handle_project_commits(call):
                 date_created = commit.get("date_created", "Не указано")
                 created_by = commit.get("created_by", "Не указано")
 
-                # Форматирование даты
                 formatted_date = datetime.fromisoformat(date_created[:-1]).strftime(
                     "%Y-%m-%d %H:%M:%S"
                 )
@@ -772,7 +750,6 @@ def handle_project_commits(call):
                 commits_message += f"📅 *Дата создания:* {formatted_date}\n"
                 commits_message += f"👤 *Создано пользователем:* {created_by}\n\n"
 
-            # Отправка сообщения с коммитами
             bot.send_message(
                 call.message.chat.id, commits_message, parse_mode="Markdown"
             )
@@ -788,7 +765,6 @@ def handle_project_commits(call):
 def get_repoHub():
     """функция для получения интеграции с гитхабом"""
     integrations = get_integrations()
-    # Преобразуем ответ в JSON
     if integrations.status_code == 200:
         integrations_data = integrations.json()  # Преобразуем в JSON
         if len(integrations_data["repo_hubs"]) > 0:
@@ -805,7 +781,6 @@ def handle_project_new_task(call):
     """Хендлер для добавления задачи"""
     project_id = call.data.split("_")[3]
 
-    # Запрашиваем название задачи
     bot.send_message(call.message.chat.id, "Введите название задачи:")
     bot.register_next_step_handler(call.message, process_task_name, project_id)
 
@@ -814,7 +789,6 @@ def process_task_name(message, project_id):
     """функция для получения названия задачи"""
     task_name = message.text  # Получаем название задачи
 
-    # Запрашиваем описание задачи
     bot.send_message(message.chat.id, "Введите описание задачи:")
     bot.register_next_step_handler(
         message, process_task_description, project_id, task_name
@@ -825,7 +799,6 @@ def process_task_description(message, project_id, task_name):
     """функция для получения описания задачи"""
     task_description = message.text  # Получаем описание задачи
 
-    # Запрашиваем дедлайн задачи
     bot.send_message(
         message.chat.id, "Введите дедлайн задачи (в формате dd.mm.YYYY HH:MM):"
     )
@@ -838,10 +811,8 @@ def process_task_deadline(message, project_id, task_name, task_description):
     """функция для получения дедлайна задачи"""
     task_deadline_input = message.text  # Получаем дедлайн задачи
     try:
-        # Преобразуем строку в объект datetime
         deadline_datetime = datetime.strptime(task_deadline_input, "%d.%m.%Y %H:%M")
 
-        # Формируем данные для новой задачи
         new_task_data = {
             "name": task_name,
             "description": task_description,
@@ -849,11 +820,11 @@ def process_task_deadline(message, project_id, task_name, task_description):
             + "Z",  # Преобразуем в строку ISO 8601
         }
 
-        # Формируем URL для добавления задачи
         url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks/add"
 
-        # Отправляем POST-запрос с данными новой задачи
-        response = requests.post(url, json=new_task_data, headers=get_headers())
+        response = requests.post(
+            url, json=new_task_data, headers=get_headers(), timeout=10
+        )
 
         if response.status_code == 200:
             bot.send_message(message.chat.id, "Задача успешно добавлена!")
@@ -876,14 +847,13 @@ def handle_project_new_task(call):
     project_id = call.data.split("_")[2]
     url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks"
 
-    response = requests.get(url, headers=get_headers())
+    response = requests.get(url, headers=get_headers(), timeout=10)
 
     if response.status_code == 200:
         tasks_data = response.json()
         tasks = tasks_data.get("tasks", [])
 
         if tasks:
-            # Формирование сообщения с заданиями
             tasks_message = "*Задания по проекту:*\n\n"
             for task in tasks:
                 task_id = task.get("id", "Не указано")
@@ -893,7 +863,6 @@ def handle_project_new_task(call):
                 task_status = task.get("status", "Не указано")
                 cloud_folder_link = task.get("cloud_folder_link", "Не указано")
 
-                # Форматирование даты
                 formatted_deadline = datetime.fromisoformat(
                     task_deadline[:-1]
                 ).strftime("%Y-%m-%d %H:%M:%S")
@@ -948,7 +917,6 @@ def process_meeting_description(message, project_id, student_id, name):
     """функция для получения описания встречи"""
     desc = message.text  # Получаем название
 
-    # Запрашиваем описание задачи
     bot.send_message(message.chat.id, "Введите время встречи:")
     bot.register_next_step_handler(
         message, process_meeting_time, project_id, student_id, name, desc
@@ -959,7 +927,6 @@ def process_meeting_time(message, project_id, student_id, name, desc):
     """функция для получения времени встречи"""
     time = message.text  # Получаем название встречи
 
-    # Запрашиваем формат встречи
     bot.send_message(
         message.chat.id,
         "Выберите формат встречи:",
@@ -989,7 +956,6 @@ def process_meeting_format(message, project_id, student_id, name, desc, time):
             "Пожалуйста, выберите корректный формат встречи: Онлайн или Оффлайн.",
         )
         return  # Завершаем выполнение функции, если формат некорректный
-
     try:
         # Преобразуем строку в объект datetime
         online = meeting_format == "Онлайн"  # Устанавливаем значение is_online
@@ -1006,10 +972,10 @@ def process_meeting_format(message, project_id, student_id, name, desc, time):
 
         print(new_meeting_data)
 
-        # Отправляем данные на сервер или выполняем другие действия
-        # Например, отправка POST-запроса для добавления встречи
         url = f"{HOST_URL}/api/v1/meetings/add"
-        response = requests.post(url, json=new_meeting_data, headers=get_headers())
+        response = requests.post(
+            url, json=new_meeting_data, headers=get_headers(), timeout=10
+        )
 
         if response.status_code == 200:
             bot.send_message(message.chat.id, "Встреча успешно добавлена!")
