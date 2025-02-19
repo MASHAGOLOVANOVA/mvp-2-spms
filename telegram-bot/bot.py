@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timedelta
 import telebot
 import requests
+from requests.exceptions import RequestException
 from telegram.constants import ParseMode
 
 HOST_URL = "http://localhost:8080"
@@ -12,16 +13,16 @@ HOST_URL = "http://localhost:8080"
 CLIENT_URL = "http://localhost:3000"
 
 class SessionManager:
-    """Класс для получении инфы о сессии"""
     def __init__(self):
+        """Класс для получении инфы о сессии"""
         self.session_token = None
 
-    """функция для апдейта токена"""
     def set_session_token(self, token):
+        """функция для апдейта токена"""
         self.session_token = token
 
-    """функция для получения хедеров запросов"""
     def get_headers(self):
+        """функция для получения хедеров запросов"""
         return {
             "Content-Type": "application/json",
             "Bot-Token": "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI",
@@ -135,7 +136,7 @@ def handle_projects(message):
                 message.chat.id,
                 f"Ошибка при получении проектов: {response.status_code}",
             )
-    except Exception as e:
+    except RequestException as e:
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
@@ -258,8 +259,8 @@ def verify_number(message, credentials):
                 "Произошла ошибка при поиске пользователя по номеру телефона.",
             )
 
-    except Exception as e:
-        bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
+    except RequestException as e:
+        bot.send_message(message.chat.id, f"Ошибка сети: {str(e)}")
 
 
 def get_account():
