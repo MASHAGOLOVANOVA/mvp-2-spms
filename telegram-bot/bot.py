@@ -43,7 +43,9 @@ def start_message(message):
     button = types.KeyboardButton("Отправить номер телефона", request_contact=True)
     keyboard.add(button)
 
-    bot.send_message(message.chat.id, 'Привет! \nЭто бот Системы для управления студенческими проектами! Пожалуйста, отправьте свой номер телефона.', reply_markup=keyboard)
+    bot.send_message(message.chat.id, '''Привет! \n
+Это бот Системы для управления студенческими проектами!
+Пожалуйста, отправьте свой номер телефона.''', reply_markup=keyboard)
 
 @bot.message_handler(content_types=['contact'])
 def handle_contact(message):
@@ -69,7 +71,9 @@ def show_main_menu(chat_id):
     if has_planner!=None:
         keyboard.add(button_projects, button_meetings, button_add_project)
     else:
-        bot.send_message(chat_id, f'К сожалению Вам недоступно расписание встреч!\nЧтобы пользоваться расписанием, подключите Google Calendar из веб-приложения:\n{client_url}/profile/integrations')
+        bot.send_message(chat_id, f'''К сожалению Вам недоступно расписание встреч!\n
+Чтобы пользоваться расписанием, подключите Google Calendar из веб-приложения:
+\n{client_url}/profile/integrations''')
         keyboard.add(button_projects, button_add_project)
 
     bot.send_message(chat_id, 'Выберите действие:', reply_markup=keyboard)
@@ -204,7 +208,8 @@ def verify_number(message,credentials):
                 if cloud_drive!=None:
                     show_main_menu(message.chat.id)
                 else:
-                    bot.send_message(message.chat.id,f"""Чтобы воспользоваться функциями бота подключите Google Drive из веб-приложения:\n{client_url}/profile/integrations""")
+                    bot.send_message(message.chat.id,f"""Чтобы воспользоваться функциями бота подключите
+ Google Drive из веб-приложения:\n{client_url}/profile/integrations""")
             else:
                 print("session_token не найден в ответе")
         else:
@@ -262,7 +267,8 @@ def add_project(message):
     students = get_students()
 
     if not students:
-        bot.send_message(message.chat.id, 'Нет доступных студентов для выбора. Вы можете добавить нового студента. Введите имя нового студента:')
+        bot.send_message(message.chat.id, '''Нет доступных студентов для выбора.
+Вы можете добавить нового студента. Введите имя нового студента:''')
         bot.register_next_step_handler(message, add_student_name)
         return
     # Создаем клавиатуру для выбора студента
@@ -379,7 +385,12 @@ def add_student_course(message, student_name, student_surname, student_middlenam
             keyboard.add(types.KeyboardButton(programme['name']))
 
         bot.send_message(message.chat.id, 'Выберите образовательную программу:', reply_markup=keyboard)
-        bot.register_next_step_handler(message, lambda msg: add_student_programme(msg, student_name, student_surname, student_middlename, student_course))
+        bot.register_next_step_handler(message, 
+                                       lambda msg: add_student_programme(msg, 
+                                                                         student_name, 
+                                                                         student_surname, 
+                                                                         student_middlename, 
+                                                                         student_course))
     except ValueError:
         bot.send_message(message.chat.id, 'Курс должен быть числом. Пожалуйста, попробуйте снова.')
         add_student_course(message, student_name, student_surname, student_middlename)
@@ -447,13 +458,17 @@ def handle_project_details(call):
         button2 = types.InlineKeyboardButton("Коммиты", callback_data=f"commits_project_{project_details['id']}")
         button3 = types.InlineKeyboardButton("Задания", callback_data=f"tasks_project_{project_details['id']}")
         button4 = types.InlineKeyboardButton("Назначить задание", callback_data=f"add_task_project_{project_details['id']}")
-        button5 = types.InlineKeyboardButton("Назначить встречу", callback_data=f"add_meeting_project_{project_details['id']}_student_{project_details['student']['id']}")
+        button5 = types.InlineKeyboardButton("Назначить встречу", 
+                                             callback_data=
+                                             f"add_meeting_project_{project_details['id']}_student_{project_details['student']['id']}")
 
         if get_repoHub() is not None:
             markup.add(button1, button2, button3, button4, button5)
         else:
             bot.send_message(call.message.chat.id,
-                             f"Вам недоступны коммиты проекта, подключите интеграцию с Github в личном кабинете в веб-приложении: <a href='{client_url}/profile/integrations'>Перейти к интеграциям</a>",
+                             f'''Вам недоступны коммиты проекта, подключите интеграцию
+с Github в личном кабинете в веб-приложении: <a href='{client_url}/profile/integrations'>
+Перейти к интеграциям</a>''',
                              parse_mode='HTML')
             markup.add(button1, button3, button4, button5)
 
