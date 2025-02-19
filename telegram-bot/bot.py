@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Этот модуль реализует функциональность бота Telegram."""
-     
+
 
 import telebot
 import requests
