@@ -16,14 +16,15 @@ CLIENT_URL = "http://localhost:3000"
 SESSION_TOKEN = ""
 
 
-"""# Функция для обновления session_token"""
 def update_session_token(new_token):
+    """# Функция для обновления session_token"""
     global SESSION_TOKEN
     SESSION_TOKEN = new_token
 
 
-"""# Функция для получения заголовков с актуальным session_token"""
+
 def get_headers():
+    """# Функция для получения заголовков с актуальным session_token"""
     return {
         "Content-Type": "application/json",
         "Bot-Token": "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI",
@@ -37,9 +38,10 @@ BOT_TOKEN = "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 
-"""Хендлер команды start"""
+
 @bot.message_handler(commands=["start"])
 def start_message(message):
+    """Хендлер команды start"""
     # Создаем кнопку для запроса номера телефона
     keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
     button = telebot.KeyboardButton("Отправить номер телефона", request_contact=True)
@@ -54,9 +56,10 @@ def start_message(message):
     )
 
 
-"""Хендлер contact"""
+
 @bot.message_handler(content_types=["contact"])
 def handle_contact(message):
+    """Хендлер contact"""
     contact = message.contact
     phone_number = contact.phone_number  # Получаем номер телефона
     bot.send_message(message.chat.id, f"Спасибо! Ваш номер телефона: {phone_number}")
@@ -66,8 +69,9 @@ def handle_contact(message):
     verify_number(message, credentials)
 
 
-"""функция открытия главного меню"""
+
 def show_main_menu(chat_id):
+    """функция открытия главного меню"""
     # Создаем главное меню
     keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_projects = telebot.types.KeyboardButton("Мои проекты")
@@ -89,9 +93,10 @@ def show_main_menu(chat_id):
     bot.send_message(chat_id, "Выберите действие:", reply_markup=keyboard)
 
 
-"""Хендлер проектов"""
+
 @bot.message_handler(func=lambda message: message.text == "Мои проекты")
 def handle_projects(message):
+    """Хендлер проектов"""
     try:
         response = requests.get(f"{HOST_URL}/api/v1/projects/", headers=get_headers())
 
@@ -129,9 +134,10 @@ def handle_projects(message):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
-"""Хендлер встреч"""
+
 @bot.message_handler(func=lambda message: message.text == "Мои встречи")
 def handle_meetings(message):
+    """Хендлер встреч"""
     meetings = get_schedule()
     if len(meetings) > 0:
         response = format_meetings(group_meetings_by_day(meetings))
@@ -152,8 +158,9 @@ days_translation = {
 }
 
 
-"""функция для группировки встреч"""
+
 def group_meetings_by_day(meetings):
+    """функция для группировки встреч"""
     grouped = {}
     for meeting in meetings:
         meeting_time = datetime.fromisoformat(meeting["time"].replace("Z", "+00:00"))
@@ -166,8 +173,9 @@ def group_meetings_by_day(meetings):
     return grouped
 
 
-"""функция для форматирования встреч"""
+
 def format_meetings(grouped_meetings):
+    """функция для форматирования встреч"""
     alldays = []
     for day, meetings in grouped_meetings.items():
         response = f"*{day}*\n\n"  # Заголовок дня недели
@@ -191,15 +199,12 @@ def format_meetings(grouped_meetings):
     return alldays
 
 
-"""функция для получения расписания"""
-def get_schedule():
-    # Получаем текущую дату в формате ISO 8601
 
+def get_schedule():
+    """функция для получения расписания"""
     current_time = datetime.utcnow()
-    # Устанавливаем время на начало сегодняшнего дня
     start_of_day = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Преобразуем в строку формата ISO 8601 с миллисекундами
     iso_format_time = start_of_day.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
     # Формируем URL с параметром from
@@ -215,8 +220,9 @@ def get_schedule():
     return []
 
 
-"""функция для поиска номера в системе"""
+
 def verify_number(message, credentials):
+    """функция для поиска номера в системе"""
     try:
         bot.send_message(message.chat.id, "Проверяем регистрацию...")
         response = requests.post(
@@ -255,8 +261,9 @@ def verify_number(message, credentials):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
-"""функция для получения аккаунта"""
+
 def get_account(message):
+    """функция для получения аккаунта"""
     response = requests.get(f"{HOST_URL}/api/v1/account", headers=get_headers())
     if response.status_code == 200:
         account = response.json()
@@ -264,16 +271,18 @@ def get_account(message):
     return []
 
 
-"""функция для получения интеграций"""
+
 def get_integrations():
+    """функция для получения интеграций"""
     integrations_response = requests.get(
         f"{HOST_URL}/api/v1/account/integrations", headers=get_headers()
     )
     return integrations_response
 
 
-"""функция для получения интеграции с диском"""
+
 def get_cloud_drive():
+    """функция для получения интеграции с диском"""
     integrations = get_integrations()
     try:
         response_json = integrations.json()
@@ -286,8 +295,8 @@ def get_cloud_drive():
         return None
 
 
-"""функция для получения интеграции с планнером"""
 def get_google_planner():
+    """функция для получения интеграции с планнером"""
     integrations = get_integrations()
     print(integrations.text)
     try:
@@ -304,9 +313,10 @@ def get_google_planner():
         return None
 
 
-"""Хендлер команды Добавить проект"""
+
 @bot.message_handler(func=lambda message: message.text == "Добавить проект")
 def add_project(message):
+    """Хендлер команды Добавить проект"""
     students = get_students()
 
     if not students:
@@ -332,8 +342,9 @@ def add_project(message):
     bot.register_next_step_handler(message, process_student_selection)
 
 
-"""функция для выбора студента"""
+
 def process_student_selection(message):
+    """функция для выбора студента"""
     student_name = message.text
     # Здесь вы можете добавить проверку на наличие выбранного студента в списке
     # Например, если у вас есть список студентов в виде словаря
@@ -357,8 +368,9 @@ def process_student_selection(message):
     )
 
 
-"""функция для выбора темы проекта"""
+
 def process_project_theme(message, student):
+    """функция для выбора темы проекта"""
     project_theme = message.text
     bot.send_message(message.chat.id, "Введите год проекта (число):")
     bot.register_next_step_handler(
@@ -366,8 +378,9 @@ def process_project_theme(message, student):
     )
 
 
-"""функция для выбора года проекта"""
+
 def process_project_year(message, student, project_theme):
+    """функция для выбора года проекта"""
     try:
         project_year = int(message.text)
         bot.send_message(message.chat.id, "Введите владельца репозитория (логин):")
@@ -382,8 +395,9 @@ def process_project_year(message, student, project_theme):
         process_project_year(message, student, project_theme)
 
 
-"""функция для выбора владельца проекта"""
+
 def process_repo_owner(message, student, project_theme, project_year):
+    """функция для выбора владельца проекта"""
     repo_owner = message.text
     bot.send_message(message.chat.id, "Введите имя репозитория:")
     bot.register_next_step_handler(
@@ -394,11 +408,11 @@ def process_repo_owner(message, student, project_theme, project_year):
     )
 
 
-"""функция для ввода имени репозитория"""
+
 def process_repository_name(message, student, project_theme, project_year, repo_owner):
+    """функция для ввода имени репозитория"""
     repository_name = message.text
 
-    # Отправляем данные проекта на сервер
     response = requests.post(
         f"{HOST_URL}/api/v1/projects/add",
         json={
@@ -425,9 +439,10 @@ def process_repository_name(message, student, project_theme, project_year, repo_
     show_main_menu(message.chat.id)
 
 
-"""функция для получения студентов"""
+
 # Предполагается, что у вас есть функция для получения списка студентов
 def get_students():
+    """функция для получения студентов"""
     response = requests.get(f"{HOST_URL}/api/v1/students", headers=get_headers())
     if response.status_code == 200:
         response_data = response.json()
@@ -437,8 +452,8 @@ def get_students():
 
 
 
-"""функция для получения учебных программ"""
 def get_educational_programmes():
+    """функция для получения учебных программ"""
     response = requests.get(
         f"{HOST_URL}/api/v1/universities/1/edprogrammes/", headers=get_headers()
     )
@@ -449,9 +464,8 @@ def get_educational_programmes():
     return []
 
 
-
-"""функция для ввода имени студента"""
 def add_student_name(message):
+    """функция для ввода имени студента"""
     student_name = message.text
     bot.send_message(message.chat.id, "Введите фамилию нового студента:")
     bot.register_next_step_handler(
@@ -459,8 +473,8 @@ def add_student_name(message):
     )
 
 
-"""функция для ввода фамилии студента"""
 def add_student_surname(message, student_name):
+    """функция для ввода фамилии студента"""
     student_surname = message.text
     bot.send_message(message.chat.id, "Введите отчество нового студента:")
     bot.register_next_step_handler(
@@ -468,8 +482,8 @@ def add_student_surname(message, student_name):
     )
 
 
-"""функция для ввода отчества студента"""
 def add_student_middlename(message, student_name, student_surname):
+    """функция для ввода отчества студента"""
     student_middlename = message.text
     bot.send_message(message.chat.id, "Введите курс нового студента (число):")
     bot.register_next_step_handler(
@@ -480,8 +494,8 @@ def add_student_middlename(message, student_name, student_surname):
     )
 
 
-"""функция для ввода курса студента"""
 def add_student_course(message, student_name, student_surname, student_middlename):
+    """функция для ввода курса студента"""
     try:
         student_course = int(message.text)
         educational_programmes = get_educational_programmes()
@@ -516,10 +530,10 @@ def add_student_course(message, student_name, student_surname, student_middlenam
         add_student_course(message, student_name, student_surname, student_middlename)
 
 
-"""функция для ввода уч программы студента"""
 def add_student_programme(
     message, student_name, student_surname, student_middlename, student_course
 ):
+    """функция для ввода уч программы студента"""
     selected_programme_name = message.text
     educational_programmes = get_educational_programmes()
 
@@ -565,9 +579,9 @@ def add_student_programme(
         show_main_menu(message.chat.id)
 
 
-"""Хендлер для просмотра информации о проекте"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("project_"))
 def handle_project_details(call):
+    """Хендлер для просмотра информации о проекте"""
     project_id = call.data.split("_")[1]
 
     # Запрос к API для получения деталей проекта
@@ -654,11 +668,11 @@ def handle_project_details(call):
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
 
 
-"""Хендлер для просмотра статистики по проекту"""
 @bot.callback_query_handler(
     func=lambda call: call.data.startswith("statistics_project_")
 )
 def handle_project_statisctics(call):
+    """Хендлер для просмотра статистики по проекту"""
     project_id = call.data.split("_")[2]
     response = requests.get(
         f"{HOST_URL}/api/v1/projects/{project_id}/statistics", headers=get_headers()
@@ -719,9 +733,9 @@ def handle_project_statisctics(call):
         )
 
 
-"""Хендлер для просмотра коммитов по проекту"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("commits_project_"))
 def handle_project_commits(call):
+    """Хендлер для просмотра коммитов по проекту"""
     project_id = call.data.split("_")[2]
     current_time = datetime.utcnow()
     # Устанавливаем время на начало сегодняшнего дня
@@ -771,8 +785,8 @@ def handle_project_commits(call):
         )
 
 
-"""функция для получения интеграции с гитхабом"""
 def get_repoHub():
+    """функция для получения интеграции с гитхабом"""
     integrations = get_integrations()
     # Преобразуем ответ в JSON
     if integrations.status_code == 200:
@@ -786,9 +800,9 @@ def get_repoHub():
         return None
 
 
-"""Хендлер для добавления задачи"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("add_task_project_"))
 def handle_project_new_task(call):
+    """Хендлер для добавления задачи"""
     project_id = call.data.split("_")[3]
 
     # Запрашиваем название задачи
@@ -796,8 +810,8 @@ def handle_project_new_task(call):
     bot.register_next_step_handler(call.message, process_task_name, project_id)
 
 
-"""функция для получения названия задачи"""
 def process_task_name(message, project_id):
+    """функция для получения названия задачи"""
     task_name = message.text  # Получаем название задачи
 
     # Запрашиваем описание задачи
@@ -807,8 +821,8 @@ def process_task_name(message, project_id):
     )
 
 
-"""функция для получения описания задачи"""
 def process_task_description(message, project_id, task_name):
+    """функция для получения описания задачи"""
     task_description = message.text  # Получаем описание задачи
 
     # Запрашиваем дедлайн задачи
@@ -820,8 +834,8 @@ def process_task_description(message, project_id, task_name):
     )
 
 
-"""функция для получения дедлайна задачи"""
 def process_task_deadline(message, project_id, task_name, task_description):
+    """функция для получения дедлайна задачи"""
     task_deadline_input = message.text  # Получаем дедлайн задачи
     try:
         # Преобразуем строку в объект datetime
@@ -856,9 +870,9 @@ def process_task_deadline(message, project_id, task_name, task_description):
         )
 
 
-"""Хендлер для получения задач проекта"""
 @bot.callback_query_handler(func=lambda call: call.data.startswith("tasks_project_"))
 def handle_project_new_task(call):
+    """Хендлер для получения задач проекта"""
     project_id = call.data.split("_")[2]
     url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks"
 
@@ -904,11 +918,11 @@ def handle_project_new_task(call):
         )
 
 
-"""Хендлер для добавления встречи по проекту"""
 @bot.callback_query_handler(
     func=lambda call: call.data.startswith("add_meeting_project_")
 )
 def handle_project_new_meeting(call):
+    """Хендлер для добавления встречи по проекту"""
     project_id = call.data.split("_")[3]
     student_id = call.data.split("_")[5]
 
@@ -919,8 +933,8 @@ def handle_project_new_meeting(call):
     )
 
 
-"""функция для получения названия встречи"""
 def process_meeting_name(message, project_id, student_id):
+    """функция для получения названия встречи"""
     name = message.text  # Получаем название
 
     # Запрашиваем описание задачи
@@ -930,8 +944,8 @@ def process_meeting_name(message, project_id, student_id):
     )
 
 
-"""функция для получения описания встречи"""
 def process_meeting_description(message, project_id, student_id, name):
+    """функция для получения описания встречи"""
     desc = message.text  # Получаем название
 
     # Запрашиваем описание задачи
@@ -941,8 +955,8 @@ def process_meeting_description(message, project_id, student_id, name):
     )
 
 
-"""функция для получения времени встречи"""
 def process_meeting_time(message, project_id, student_id, name, desc):
+    """функция для получения времени встречи"""
     time = message.text  # Получаем название встречи
 
     # Запрашиваем формат встречи
@@ -956,8 +970,8 @@ def process_meeting_time(message, project_id, student_id, name, desc):
     )
 
 
-"""функция для получения доски для выбора формата встречи"""
 def get_meeting_format_markup():
+    """функция для получения доски для выбора формата встречи"""
     markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
     button_online = telebot.types.KeyboardButton("Онлайн")
     button_offline = telebot.types.KeyboardButton("Оффлайн")
@@ -965,8 +979,8 @@ def get_meeting_format_markup():
     return markup
 
 
-"""функция для получения формата встречи"""
 def process_meeting_format(message, project_id, student_id, name, desc, time):
+    """функция для получения формата встречи"""
     meeting_format = message.text  # Получаем формат встречи
 
     if meeting_format not in ["Онлайн", "Оффлайн"]:
