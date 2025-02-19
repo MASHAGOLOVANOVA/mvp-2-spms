@@ -29,7 +29,6 @@ def get_headers():
     }
 
 
-
 BOT_TOKEN = "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI"
 # Создаем экземпляр бота
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -70,7 +69,7 @@ def show_main_menu(chat_id):
     button_add_project = telebot.types.KeyboardButton("Добавить проект")  # Новая кнопка
 
     has_planner = get_google_planner()
-    if has_planner != None:
+    if has_planner is not None:
         keyboard.add(button_projects, button_meetings, button_add_project)
     else:
         bot.send_message(
@@ -123,7 +122,6 @@ def handle_projects(message):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
-
 @bot.message_handler(func=lambda message: message.text == "Мои встречи")
 def handle_meetings(message):
     meetings = get_schedule()
@@ -147,7 +145,7 @@ days_translation = {
 
 
 def group_meetings_by_day(meetings):
-    grouped = dict()
+    grouped = {}
     for meeting in meetings:
         meeting_time = datetime.fromisoformat(meeting["time"].replace("Z", "+00:00"))
         day = days_translation.get(meeting_time.strftime("%A"))  # Получаем день недели
@@ -172,11 +170,13 @@ def format_meetings(grouped_meetings):
             # Форматируем время
             formatted_start_time = start_time.strftime("%H:%M")
             formatted_end_time = end_time.strftime("%H:%M")
-            response += f"{formatted_start_time} - {formatted_end_time}\nНазвание: {meeting['name']}\n"
+            response += f"{formatted_start_time}"
+            +f" - {formatted_end_time}\nНазвание: {meeting['name']}\n"
             response += f"Описание: {meeting['description']}\n"
-            response += f"Студент: {meeting['student']['name']}, Курс: {meeting['student']['cource']}\n"
+            response += f"Студент: {meeting['student']['name']},"
+            +f" Курс: {meeting['student']['cource']}\n"
             response += f"{'Онлайн' if meeting['is_online'] else 'Оффлайн'}\n\n"
-        response += f"\n"
+        response += "\n"
         alldays.append(response)
     return alldays
 
@@ -264,9 +264,8 @@ def get_cloud_drive():
         response_json = integrations.json()
         if "cloud_drive" in response_json:
             return response_json["cloud_drive"]
-        else:
-            print("Cloud Drive не найден.")
-            return None
+        print("Cloud Drive не найден.")
+        return None
     except ValueError as e:
         print(f"Ошибка при обработке JSON: {e}")
         return None
@@ -281,11 +280,9 @@ def get_google_planner():
         if "planner" in response_json:
             if "planner_name" in response_json["planner"]:
                 return response_json["planner"]["planner_name"]
-            else:
-                return None
-        else:
-            print("Cloud Calendar не найден.")
             return None
+        print("Cloud Calendar не найден.")
+        return None
     except ValueError as e:
         print(f"Ошибка при обработке JSON: {e}")
         return None
@@ -592,7 +589,8 @@ def handle_project_details(call):
         )
         button5 = telebot.types.InlineKeyboardButton(
             "Назначить встречу",
-            callback_data=f"add_meeting_project_{project_details['id']}_student_{project_details['student']['id']}",
+            callback_data=f"add_meeting_project_"
+            + f"{project_details['id']}_student_{project_details['student']['id']}",
         )
 
         if get_repoHub() is not None:
