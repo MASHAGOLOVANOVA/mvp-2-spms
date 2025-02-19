@@ -20,7 +20,7 @@ type GoogleAPI struct {
 func InitGoogleAPI(scope ...string) GoogleAPI {
 	ctx := context.Background()
 
-	b, err := os.ReadFile("credentials.json")
+	b, err := os.ReadFile("/mvp-2-spms/web_server/cmd/web_app/credentials.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}

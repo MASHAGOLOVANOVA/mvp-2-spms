@@ -22,7 +22,7 @@ type githubAPI struct {
 func InitGithubAPI() githubAPI {
 
 	ctx := context.Background()
-	config, err := readConfigFromJSON("credentials_github.json")
+	config, err := readConfigFromJSON("/mvp-2-spms/web_server/cmd/web_app/credentials_github.json")
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}

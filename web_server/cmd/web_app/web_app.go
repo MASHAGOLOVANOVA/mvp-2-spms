@@ -35,7 +35,7 @@ import (
 )
 
 func main() {
-	serverConfig, err := config.ReadConfigFromFile("server_config.json")
+	serverConfig, err := config.ReadConfigFromFile("/mvp-2-spms/web_server/cmd/web_app/server_config.json")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -45,18 +45,24 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	session.SetBotTokenFromJson("credentials_bot.json")
-	dbConfig, err := database.ReadDBConfigFromFile("db_config.json")
+	session.SetBotTokenFromJson("/mvp-2-spms/web_server/cmd/web_app/credentials_bot.json")
+	dbConfig, err := database.ReadDBConfigFromFile("/mvp-2-spms/web_server/cmd/web_app/db_config.json")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	gdb, err := gorm.Open(mysql.Open(dbConfig.ConnString), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: dbConfig.SingularTable, // use singular table name, table for `User` would be `user` with this option enabled
-		},
-	})
-	if err != nil {
+	var gdb *gorm.DB
+	gdb = nil
+	var err1 error
+	err1 = nil
+	for i := 0; i < 20; i++ {
+		gdb, err1 = gorm.Open(mysql.Open(dbConfig.ConnString), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{
+				SingularTable: dbConfig.SingularTable, // use singular table name, table for `User` would be `user` with this option enabled
+			},
+		})
+	}
+	if err1 != nil {
 		log.Fatal(err.Error())
 	}
 

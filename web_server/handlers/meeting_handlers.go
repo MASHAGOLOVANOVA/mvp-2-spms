@@ -39,12 +39,16 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	print("foundUser")
+
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
+
+	print("foundProf")
 
 	headerContentTtype := r.Header.Get("Content-Type")
 	// проверяем соответсвтвие типа содержимого запроса
@@ -63,6 +67,8 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	print("decoded_fields")
 
 	integInput := ainputdata.GetPlannerIntegration{
 		AccountId: uint(id),
