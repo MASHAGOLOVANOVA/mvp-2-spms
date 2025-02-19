@@ -28,7 +28,7 @@ class SessionManager:
         }
 
 
-sessionManager = SessionManager() 
+sessionManager = SessionManager()
 
 
 def update_session_token(new_token):
@@ -98,7 +98,9 @@ def handle_projects(message):
     """Хендлер проектов"""
     try:
         response = requests.get(
-            f"{HOST_URL}/api/v1/projects/", headers=sessionManager.get_headers(), timeout=10
+            f"{HOST_URL}/api/v1/projects/",
+            headers=sessionManager.get_headers(),
+            timeout=10,
         )
 
         # Проверяем статус ответа
@@ -258,7 +260,7 @@ def verify_number(message, credentials):
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
 
-def get_account(message):
+def get_account():
     """функция для получения аккаунта"""
     response = requests.get(
         f"{HOST_URL}/api/v1/account", headers=sessionManager.get_headers(), timeout=10
@@ -272,7 +274,9 @@ def get_account(message):
 def get_integrations():
     """функция для получения интеграций"""
     integrations_response = requests.get(
-        f"{HOST_URL}/api/v1/account/integrations", headers=sessionManager.get_headers(), timeout=10
+        f"{HOST_URL}/api/v1/account/integrations",
+        headers=sessionManager.get_headers(),
+        timeout=10,
     )
     return integrations_response
 
@@ -611,7 +615,6 @@ def handle_project_details(call):
             + project_details["cloud_folder_link"]
             + ")\n"
         )
-
         # Создание кнопок
         markup = telebot.types.InlineKeyboardMarkup()
         button1 = telebot.types.InlineKeyboardButton(
@@ -633,7 +636,7 @@ def handle_project_details(call):
             + f"{project_details['id']}_student_{project_details['student']['id']}",
         )
 
-        if get_repoHub() is not None:
+        if get_repohub() is not None:
             markup.add(button1, button2, button3, button4, button5)
         else:
             bot.send_message(
@@ -767,15 +770,14 @@ def handle_project_commits(call):
         )
 
 
-def get_repoHub():
+def get_repohub():
     """функция для получения интеграции с гитхабом"""
     integrations = get_integrations()
     if integrations.status_code == 200:
         integrations_data = integrations.json()  # Преобразуем в JSON
         if len(integrations_data["repo_hubs"]) > 0:
             return integrations_data["repo_hubs"]
-        else:
-            return None
+        return None
     else:
         print(f"Ошибка при получении интеграций: {integrations.status_code}")
         return None
@@ -881,7 +883,6 @@ def handle_project_new_task(call):
                     f"📂 *Ссылка на папку:* [Google Drive]({cloud_folder_link})\n\n"
                 )
 
-            # Отправка сообщения с заданиями
             bot.send_message(call.message.chat.id, tasks_message, parse_mode="Markdown")
         else:
             bot.send_message(call.message.chat.id, "Задания отсутствуют.")
@@ -900,7 +901,6 @@ def handle_project_new_meeting(call):
     project_id = call.data.split("_")[3]
     student_id = call.data.split("_")[5]
 
-    # Запрашиваем название
     bot.send_message(call.message.chat.id, "Введите название встречи:")
     bot.register_next_step_handler(
         call.message, process_meeting_name, project_id, student_id
@@ -911,7 +911,6 @@ def process_meeting_name(message, project_id, student_id):
     """функция для получения названия встречи"""
     name = message.text  # Получаем название
 
-    # Запрашиваем описание задачи
     bot.send_message(message.chat.id, "Введите описание встречи:")
     bot.register_next_step_handler(
         message, process_meeting_description, project_id, student_id, name
@@ -937,8 +936,9 @@ def process_meeting_time(message, project_id, student_id, name, desc):
         "Выберите формат встречи:",
         reply_markup=get_meeting_format_markup(),
     )
+    meeting_options = {"name": name, "desc": desc}
     bot.register_next_step_handler(
-        message, process_meeting_format, project_id, student_id, name, desc, time
+        message, process_meeting_format, project_id, student_id, meeting_options, time
     )
 
 
@@ -951,7 +951,7 @@ def get_meeting_format_markup():
     return markup
 
 
-def process_meeting_format(message, project_id, student_id, name, desc, time):
+def process_meeting_format(message, project_id, student_id, meeting_options, time):
     """функция для получения формата встречи"""
     meeting_format = message.text  # Получаем формат встречи
 
@@ -962,21 +962,17 @@ def process_meeting_format(message, project_id, student_id, name, desc, time):
         )
         return  # Завершаем выполнение функции, если формат некорректный
     try:
-        # Преобразуем строку в объект datetime
         online = meeting_format == "Онлайн"  # Устанавливаем значение is_online
         iso_time = (datetime.strptime(time, "%d.%m.%Y %H:%M")).isoformat()
         # Формируем данные для новой встречи
         new_meeting_data = {
-            "name": name,
-            "description": desc,
+            "name": meeting_options["name"],
+            "description": meeting_options["desc"],
             "project_id": int(project_id),
             "student_participant_id": int(student_id),
             "is_online": online,
             "meeting_time": iso_time + "Z",  # Преобразуем в строку ISO 8601
         }
-
-        print(new_meeting_data)
-
         url = f"{HOST_URL}/api/v1/meetings/add"
         response = requests.post(
             url, json=new_meeting_data, headers=sessionManager.get_headers(), timeout=10
@@ -995,6 +991,5 @@ def process_meeting_format(message, project_id, student_id, name, desc, time):
             message.chat.id,
             "Неверный формат даты. Пожалуйста, используйте формат YYYY-MM-DD HH:MM.",
         )
-
 
 bot.polling(none_stop=True, interval=0)
