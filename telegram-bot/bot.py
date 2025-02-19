@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
+import telebot
+import requests
+import json
+from datetime import datetime, timedelta
+from telegram.constants import ParseMode
 
+HOST_URL = "http://localhost:8080"
 
-host_url = ""
-
-client_url = "http://localhost:3000"
+CLIENT_URL = "http://localhost:3000"
 
 # Инициализация session_token
-session_token = ""
+SESSION_TOKEN = ""
 
 
 # Функция для обновления session_token
 def update_session_token(new_token):
-    global session_token
-    session_token = new_token
+    global SESSION_TOKEN
+    SESSION_TOKEN = new_token
 
 
 # Функция для получения заголовков с актуальным session_token
@@ -21,28 +25,21 @@ def get_headers():
         "Content-Type": "application/json",
         "Bot-Token": "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI",
         "tuna-skip-browser-warning": "please",
-        "Session-Id": session_token,
+        "Session-Id": SESSION_TOKEN,
     }
 
 
-import telebot
-import webbrowser
-from telebot import TeleBot, types
-import requests
-import json
-from datetime import datetime, timedelta
 
-
-bot_token = ""
+BOT_TOKEN = "7772483926:AAFkT_nibrVHwZmlJajxbXRU4Wxe_b7t_RI"
 # Создаем экземпляр бота
-bot = telebot.TeleBot(bot_token)
+bot = telebot.TeleBot(BOT_TOKEN)
 
 
 @bot.message_handler(commands=["start"])
 def start_message(message):
     # Создаем кнопку для запроса номера телефона
-    keyboard = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    button = types.KeyboardButton("Отправить номер телефона", request_contact=True)
+    keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    button = telebot.KeyboardButton("Отправить номер телефона", request_contact=True)
     keyboard.add(button)
 
     bot.send_message(
@@ -67,10 +64,10 @@ def handle_contact(message):
 
 def show_main_menu(chat_id):
     # Создаем главное меню
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_projects = types.KeyboardButton("Мои проекты")
-    button_meetings = types.KeyboardButton("Мои встречи")
-    button_add_project = types.KeyboardButton("Добавить проект")  # Новая кнопка
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_projects = telebot.types.KeyboardButton("Мои проекты")
+    button_meetings = telebot.types.KeyboardButton("Мои встречи")
+    button_add_project = telebot.types.KeyboardButton("Добавить проект")  # Новая кнопка
 
     has_planner = get_google_planner()
     if has_planner != None:
@@ -80,7 +77,7 @@ def show_main_menu(chat_id):
             chat_id,
             f"""К сожалению Вам недоступно расписание встреч!\n
 Чтобы пользоваться расписанием, подключите Google Calendar из веб-приложения:
-\n{client_url}/profile/integrations""",
+\n{CLIENT_URL}/profile/integrations""",
         )
         keyboard.add(button_projects, button_add_project)
 
@@ -90,7 +87,7 @@ def show_main_menu(chat_id):
 @bot.message_handler(func=lambda message: message.text == "Мои проекты")
 def handle_projects(message):
     try:
-        response = requests.get(f"{host_url}/api/v1/projects/", headers=get_headers())
+        response = requests.get(f"{HOST_URL}/api/v1/projects/", headers=get_headers())
 
         # Проверяем статус ответа
         if response.status_code == 200:
@@ -107,8 +104,8 @@ def handle_projects(message):
                     )
 
                     # Создаем кнопку для каждого проекта
-                    markup = types.InlineKeyboardMarkup()
-                    button = types.InlineKeyboardButton(
+                    markup = telebot.types.InlineKeyboardMarkup()
+                    button = telebot.types.InlineKeyboardButton(
                         "Подробнее", callback_data=f"project_{project['id']}"
                     )
                     markup.add(button)
@@ -125,8 +122,6 @@ def handle_projects(message):
     except Exception as e:
         bot.send_message(message.chat.id, f"Ошибка: {str(e)}")
 
-
-from telegram.constants import ParseMode
 
 
 @bot.message_handler(func=lambda message: message.text == "Мои встречи")
@@ -197,7 +192,7 @@ def get_schedule():
     iso_format_time = start_of_day.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
     # Формируем URL с параметром from
-    url = f"{host_url}/api/v1/meetings?from={iso_format_time}"
+    url = f"{HOST_URL}/api/v1/meetings?from={iso_format_time}"
 
     # Выполняем GET-запрос
     response = requests.get(url, headers=get_headers())
@@ -213,7 +208,7 @@ def verify_number(message, credentials):
     try:
         bot.send_message(message.chat.id, "Проверяем регистрацию...")
         response = requests.post(
-            host_url + "/api/v1/auth/bot/signinuser",
+            HOST_URL + "/api/v1/auth/bot/signinuser",
             json=credentials,
             headers=get_headers(),
         )
@@ -234,7 +229,7 @@ def verify_number(message, credentials):
                     bot.send_message(
                         message.chat.id,
                         f"""Чтобы воспользоваться функциями бота подключите
- Google Drive из веб-приложения:\n{client_url}/profile/integrations""",
+ Google Drive из веб-приложения:\n{CLIENT_URL}/profile/integrations""",
                     )
             else:
                 print("session_token не найден в ответе")
@@ -249,7 +244,7 @@ def verify_number(message, credentials):
 
 
 def get_account(message):
-    response = requests.get(f"{host_url}/api/v1/account", headers=get_headers())
+    response = requests.get(f"{HOST_URL}/api/v1/account", headers=get_headers())
     if response.status_code == 200:
         account = response.json()
         return account
@@ -258,7 +253,7 @@ def get_account(message):
 
 def get_integrations():
     integrations_response = requests.get(
-        f"{host_url}/api/v1/account/integrations", headers=get_headers()
+        f"{HOST_URL}/api/v1/account/integrations", headers=get_headers()
     )
     return integrations_response
 
@@ -309,10 +304,10 @@ def add_project(message):
         bot.register_next_step_handler(message, add_student_name)
         return
     # Создаем клавиатуру для выбора студента
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     for student in students:
         keyboard.add(
-            types.KeyboardButton(
+            telebot.types.KeyboardButton(
                 student["surname"] + " " + student["name"] + " " + student["middlename"]
             )
         )  # Предполагаем, что у студента есть поле 'name'
@@ -386,7 +381,7 @@ def process_repository_name(message, student, project_theme, project_year, repo_
 
     # Отправляем данные проекта на сервер
     response = requests.post(
-        f"{host_url}/api/v1/projects/add",
+        f"{HOST_URL}/api/v1/projects/add",
         json={
             "theme": project_theme,
             "student_id": student["id"],
@@ -413,7 +408,7 @@ def process_repository_name(message, student, project_theme, project_year, repo_
 
 # Предполагается, что у вас есть функция для получения списка студентов
 def get_students():
-    response = requests.get(f"{host_url}/api/v1/students", headers=get_headers())
+    response = requests.get(f"{HOST_URL}/api/v1/students", headers=get_headers())
     if response.status_code == 200:
         response_data = response.json()
         students = response_data.get("students", [])
@@ -423,7 +418,7 @@ def get_students():
 
 def get_educational_programmes():
     response = requests.get(
-        f"{host_url}/api/v1/universities/1/edprogrammes/", headers=get_headers()
+        f"{HOST_URL}/api/v1/universities/1/edprogrammes/", headers=get_headers()
     )
     if response.status_code == 200:
         response_data = response.json()
@@ -472,9 +467,9 @@ def add_student_course(message, student_name, student_surname, student_middlenam
             return
 
         # Создаем клавиатуру для выбора образовательной программы
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
         for programme in educational_programmes:
-            keyboard.add(types.KeyboardButton(programme["name"]))
+            keyboard.add(telebot.types.KeyboardButton(programme["name"]))
 
         bot.send_message(
             message.chat.id,
@@ -523,7 +518,7 @@ def add_student_programme(
     }
 
     response = requests.post(
-        f"{host_url}/api/v1/students/add", json=new_student_data, headers=get_headers()
+        f"{HOST_URL}/api/v1/students/add", json=new_student_data, headers=get_headers()
     )
 
     if response.status_code == 200:
@@ -548,7 +543,7 @@ def handle_project_details(call):
 
     # Запрос к API для получения деталей проекта
     headers = get_headers()
-    response = requests.get(f"{host_url}/api/v1/projects/{project_id}", headers=headers)
+    response = requests.get(f"{HOST_URL}/api/v1/projects/{project_id}", headers=headers)
 
     if response.status_code == 200:
         project_details = response.json()
@@ -581,21 +576,21 @@ def handle_project_details(call):
         )
 
         # Создание кнопок
-        markup = types.InlineKeyboardMarkup()
-        button1 = types.InlineKeyboardButton(
+        markup = telebot.types.InlineKeyboardMarkup()
+        button1 = telebot.types.InlineKeyboardButton(
             "Статистика", callback_data=f"statistics_project_{project_details['id']}"
         )
-        button2 = types.InlineKeyboardButton(
+        button2 = telebot.types.InlineKeyboardButton(
             "Коммиты", callback_data=f"commits_project_{project_details['id']}"
         )
-        button3 = types.InlineKeyboardButton(
+        button3 = telebot.types.InlineKeyboardButton(
             "Задания", callback_data=f"tasks_project_{project_details['id']}"
         )
-        button4 = types.InlineKeyboardButton(
+        button4 = telebot.types.InlineKeyboardButton(
             "Назначить задание",
             callback_data=f"add_task_project_{project_details['id']}",
         )
-        button5 = types.InlineKeyboardButton(
+        button5 = telebot.types.InlineKeyboardButton(
             "Назначить встречу",
             callback_data=f"add_meeting_project_{project_details['id']}_student_{project_details['student']['id']}",
         )
@@ -606,7 +601,7 @@ def handle_project_details(call):
             bot.send_message(
                 call.message.chat.id,
                 f"""Вам недоступны коммиты проекта, подключите интеграцию
-с Github в личном кабинете в веб-приложении: <a href='{client_url}/profile/integrations'>
+с Github в личном кабинете в веб-приложении: <a href='{CLIENT_URL}/profile/integrations'>
 Перейти к интеграциям</a>""",
                 parse_mode="HTML",
             )
@@ -635,7 +630,7 @@ def handle_project_details(call):
 def handle_project_statisctics(call):
     project_id = call.data.split("_")[2]
     response = requests.get(
-        f"{host_url}/api/v1/projects/{project_id}/statistics", headers=get_headers()
+        f"{HOST_URL}/api/v1/projects/{project_id}/statistics", headers=get_headers()
     )
 
     if response.status_code == 200:
@@ -704,7 +699,7 @@ def handle_project_commits(call):
     iso_format_time = month_ago.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
     # Формируем URL с параметром from
-    url = f"{host_url}/api/v1/projects/{project_id}/commits?from={iso_format_time}"
+    url = f"{HOST_URL}/api/v1/projects/{project_id}/commits?from={iso_format_time}"
 
     response = requests.get(url, headers=get_headers())
     if response.status_code == 200:
@@ -803,7 +798,7 @@ def process_task_deadline(message, project_id, task_name, task_description):
         }
 
         # Формируем URL для добавления задачи
-        url = f"{host_url}/api/v1/projects/{project_id}/tasks/add"
+        url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks/add"
 
         # Отправляем POST-запрос с данными новой задачи
         response = requests.post(url, json=new_task_data, headers=get_headers())
@@ -826,7 +821,7 @@ def process_task_deadline(message, project_id, task_name, task_description):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("tasks_project_"))
 def handle_project_new_task(call):
     project_id = call.data.split("_")[2]
-    url = f"{host_url}/api/v1/projects/{project_id}/tasks"
+    url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks"
 
     response = requests.get(url, headers=get_headers())
 
@@ -919,9 +914,9 @@ def process_meeting_time(message, project_id, student_id, name, desc):
 
 
 def get_meeting_format_markup():
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    button_online = types.KeyboardButton("Онлайн")
-    button_offline = types.KeyboardButton("Оффлайн")
+    markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    button_online = telebot.types.KeyboardButton("Онлайн")
+    button_offline = telebot.types.KeyboardButton("Оффлайн")
     markup.add(button_online, button_offline)
     return markup
 
@@ -954,7 +949,7 @@ def process_meeting_format(message, project_id, student_id, name, desc, time):
 
         # Отправляем данные на сервер или выполняем другие действия
         # Например, отправка POST-запроса для добавления встречи
-        url = f"{host_url}/api/v1/meetings/add"
+        url = f"{HOST_URL}/api/v1/meetings/add"
         response = requests.post(url, json=new_meeting_data, headers=get_headers())
 
         if response.status_code == 200:
