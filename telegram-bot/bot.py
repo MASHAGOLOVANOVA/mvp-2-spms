@@ -11,14 +11,16 @@ HOST_URL = "http://localhost:8080"
 
 CLIENT_URL = "http://localhost:3000"
 
-
 class SessionManager:
+    """Класс для получении инфы о сессии"""
     def __init__(self):
         self.session_token = None
 
+    """функция для апдейта токена"""
     def set_session_token(self, token):
         self.session_token = token
 
+    """функция для получения хедеров запросов"""
     def get_headers(self):
         return {
             "Content-Type": "application/json",
@@ -849,7 +851,7 @@ def process_task_deadline(message, project_id, task_name, task_description):
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("tasks_project_"))
-def handle_project_new_task(call):
+def handle_project_tasks(call):
     """Хендлер для получения задач проекта"""
     project_id = call.data.split("_")[2]
     url = f"{HOST_URL}/api/v1/projects/{project_id}/tasks"
