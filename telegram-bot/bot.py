@@ -87,10 +87,10 @@ def handle_projects(message):
 
         # Проверяем статус ответа
         if response.status_code == 200:
-          response_data = response.json()  # Предполагаем, что ответ в формате JSON
+            response_data = response.json()  # Предполагаем, что ответ в формате JSON
 
-          projects = response_data.get('projects', [])  # Предполагаем, что проекты находятся в ключе 'projects'
-          if projects:  # Проверяем, есть ли проекты в списке
+            projects = response_data.get('projects', [])  # Предполагаем, что проекты находятся в ключе 'projects'
+            if projects:  # Проверяем, есть ли проекты в списке
                 for project in projects:
                     # Создаем карточку с кнопкой для каждого проекта
                     project_card = f"""Тема: {project['theme']}\nГод: {project['year']}\n"""
@@ -102,8 +102,8 @@ def handle_projects(message):
 
                     # Отправляем сообщение с карточкой и кнопкой
                     bot.send_message(message.chat.id, project_card, reply_markup=markup)
-          else:
-            bot.send_message(message.chat.id, 'У вас нет проектов.')
+            else:
+                bot.send_message(message.chat.id, 'У вас нет проектов.')
         else:
           bot.send_message(message.chat.id, f'Ошибка при получении проектов: {response.status_code}')
     except Exception as e:
@@ -227,39 +227,39 @@ def get_account(message):
 
 
 def get_integrations():
-  integrations_response = requests.get(f'{host_url}/api/v1/account/integrations', headers=get_headers())
-  return integrations_response
+    integrations_response = requests.get(f'{host_url}/api/v1/account/integrations', headers=get_headers())
+    return integrations_response
 
 def get_cloud_drive():
-  integrations = get_integrations()
-  try:
-      response_json = integrations.json()
-      if 'cloud_drive' in response_json:
-            return response_json['cloud_drive']
-      else:
+    integrations = get_integrations()
+    try:
+        response_json = integrations.json()
+        if 'cloud_drive' in response_json:
+                return response_json['cloud_drive']
+        else:
             print("Cloud Drive не найден.")
             return None
-  except ValueError as e:
-        print(f"Ошибка при обработке JSON: {e}")
-        return None
+    except ValueError as e:
+            print(f"Ошибка при обработке JSON: {e}")
+            return None
 
 def get_google_planner():
-  integrations = get_integrations()
-  print(integrations.text)
-  try:
-      response_json = integrations.json()
-        # Проверяем наличие "cloud_drive"
-      if 'planner' in response_json:
+    integrations = get_integrations()
+    print(integrations.text)
+    try:
+        response_json = integrations.json()
+            # Проверяем наличие "cloud_drive"
+        if 'planner' in response_json:
             if 'planner_name' in response_json['planner']:
                 return response_json['planner']['planner_name']
             else:
-              return None
-      else:
+                return None
+        else:
             print("Cloud Calendar не найден.")
             return None
-  except ValueError as e:
-        print(f"Ошибка при обработке JSON: {e}")
-        return None
+    except ValueError as e:
+            print(f"Ошибка при обработке JSON: {e}")
+            return None
 
 
 @bot.message_handler(func=lambda message: message.text == "Добавить проект")
@@ -293,18 +293,21 @@ def process_student_selection(message):
         return
 
     bot.send_message(message.chat.id, 'Введите тему нового проекта:')
-    bot.register_next_step_handler(message, lambda msg: process_project_theme(msg, selected_student))
+    bot.register_next_step_handler(message, lambda msg: 
+                                   process_project_theme(msg, selected_student))
 
 def process_project_theme(message, student):
     project_theme = message.text
     bot.send_message(message.chat.id, 'Введите год проекта (число):')
-    bot.register_next_step_handler(message, lambda msg: process_project_year(msg, student, project_theme))
+    bot.register_next_step_handler(message, lambda msg: 
+                                   process_project_year(msg, student, project_theme))
 
 def process_project_year(message, student, project_theme):
     try:
         project_year = int(message.text)
         bot.send_message(message.chat.id, 'Введите владельца репозитория (логин):')
-        bot.register_next_step_handler(message, lambda msg: process_repo_owner(msg, student, project_theme, project_year))
+        bot.register_next_step_handler(message, lambda msg: 
+                                       process_repo_owner(msg, student, project_theme, project_year))
     except ValueError:
         bot.send_message(message.chat.id, 'Год должен быть числом. Пожалуйста, попробуйте снова.')
         process_project_year(message, student, project_theme)
@@ -312,7 +315,8 @@ def process_project_year(message, student, project_theme):
 def process_repo_owner(message, student, project_theme, project_year):
     repo_owner = message.text
     bot.send_message(message.chat.id, 'Введите имя репозитория:')
-    bot.register_next_step_handler(message, lambda msg: process_repository_name(msg, student, project_theme, project_year, repo_owner))
+    bot.register_next_step_handler(message, lambda msg: 
+                                   process_repository_name(msg, student, project_theme, project_year, repo_owner))
 
 def process_repository_name(message, student, project_theme, project_year, repo_owner):
     repository_name = message.text
@@ -327,9 +331,11 @@ def process_repository_name(message, student, project_theme, project_year, repo_
     }, headers=get_headers())
 
     if response.status_code == 200:
-        bot.send_message(message.chat.id, f'Проект "{project_theme}" успешно добавлен для студента "{student["name"]}"!')
+        bot.send_message(message.chat.id, 
+                         f'Проект "{project_theme}" успешно добавлен для студента "{student["name"]}"!')
     else:
-        bot.send_message(message.chat.id, f'Ошибка при добавлении проекта: {response.status_code}')
+        bot.send_message(message.chat.id, 
+                         f'Ошибка при добавлении проекта: {response.status_code}')
 
     # Вернуться в главное меню после добавления проекта
     show_main_menu(message.chat.id)
