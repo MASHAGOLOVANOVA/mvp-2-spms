@@ -1,6 +1,6 @@
 FROM golang
-WORKDIR /mvp-2-spms
 # Устанавливаем переменные окружения
+WORKDIR /app
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"mvp-2-spms/database"
-	accountepository "mvp-2-spms/database/account-repository"
+	accountrepository "mvp-2-spms/database/account-repository"
 	meetingrepository "mvp-2-spms/database/meeting-repository"
 	projectrepository "mvp-2-spms/database/project-repository"
 	studentrepository "mvp-2-spms/database/student-repository"
@@ -35,7 +35,8 @@ import (
 )
 
 func main() {
-	serverConfig, err := config.ReadConfigFromFile("/mvp-2-spms/web_server/cmd/web_app/server_config.json")
+
+	serverConfig, err := config.ReadConfigFromFile("web_server/cmd/web_app/server_config.json")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -45,8 +46,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	session.SetBotTokenFromJson("/mvp-2-spms/web_server/cmd/web_app/credentials_bot.json")
-	dbConfig, err := database.ReadDBConfigFromFile("/mvp-2-spms/web_server/cmd/web_app/db_config.json")
+	session.SetBotTokenFromJson("web_server/cmd/web_app/credentials_bot.json")
+	dbConfig, err := database.ReadDBConfigFromFile("web_server/cmd/web_app/db_config.json")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -72,7 +73,7 @@ func main() {
 		Students:     studentrepository.InitStudentRepository(*db),
 		Universities: unirepository.InitUniversityRepository(*db),
 		Meetings:     meetingrepository.InitMeetingRepository(*db),
-		Accounts:     accountepository.InitAccountRepository(*db),
+		Accounts:     accountrepository.InitAccountRepository(*db),
 		Tasks:        taskrepository.InitTaskRepository(*db),
 	}
 

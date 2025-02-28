@@ -10,7 +10,8 @@ services:
     ports:
       - "8080:8080" # Измените на нужный порт вашего приложения
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
   mysql:
     image: mysql:latest
     container_name: mysql-container
@@ -20,9 +21,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: student_project_management
       MYSQL_USER: owner
-      MYSQL_PASSWORD: klotorol159.M
+      MYSQL_PASSWORD: root
     ports: 
       - 3307:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 volumes:
   SPAMSDB:    
     external: true
