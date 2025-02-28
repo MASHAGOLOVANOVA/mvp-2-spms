@@ -74,15 +74,16 @@ func (p *ProjectInteractor) GetProjectCommits(input inputdata.GetProjectCommits,
 	}
 
 	// getting professor repo hub info, should be checked for existance later
-	repohubInfo, err := p.accountRepo.GetAccountRepoHubData(fmt.Sprint(input.ProfessorId))
-	if err != nil {
-		return outputdata.GetProjectCommits{}, err
+	resChan := p.accountRepo.GetAccountRepoHubData(fmt.Sprint(input.ProfessorId))
+	resRepo := <-resChan
+	if resRepo.Err != nil {
+		return outputdata.GetProjectCommits{}, resRepo.Err
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// check for access token first????????????????????????????????????????????
 	token := &oauth2.Token{
-		RefreshToken: repohubInfo.ApiKey,
+		RefreshToken: resRepo.BaseIntegration.ApiKey,
 	}
 
 	err = gitRepositoryHub.Authentificate(token)
@@ -91,11 +92,12 @@ func (p *ProjectInteractor) GetProjectCommits(input inputdata.GetProjectCommits,
 	}
 
 	// update token
-	repohubInfo.ApiKey = token.RefreshToken
+	resRepo.BaseIntegration.ApiKey = token.RefreshToken
 	// save new token
-	err = p.accountRepo.UpdateAccountRepoHubIntegration(repohubInfo)
-	if err != nil {
-		return outputdata.GetProjectCommits{}, err
+	resChan1 := p.accountRepo.UpdateAccountRepoHubIntegration(resRepo.BaseIntegration)
+	resErr := <-resChan1
+	if resErr.Err != nil {
+		return outputdata.GetProjectCommits{}, resErr.Err
 	}
 
 	// get from repo
@@ -172,12 +174,13 @@ func (p *ProjectInteractor) GetProjectSupReport(input inputdata.GetProjectSupRep
 	report.StudentName = student.FullNameToString()
 	report.Course = fmt.Sprint(student.Cource)
 
-	sup, err := p.accountRepo.GetProfessorById(fmt.Sprint(input.ProfessorId))
-	if err != nil {
-		return "", err
+	resChan := p.accountRepo.GetProfessorById(fmt.Sprint(input.ProfessorId))
+	resProf := <-resChan
+	if resProf.Err != nil {
+		return "", resProf.Err
 	}
-	report.ProfName = fmt.Sprint([]rune(sup.Name)[0], ".", []rune(sup.Middlename)[0], ". ", sup.Surname)
-	report.ScienceDegree = sup.ScienceDegree
+	report.ProfName = fmt.Sprint([]rune(resProf.Professor.Name)[0], ".", []rune(resProf.Professor.Middlename)[0], ". ", resProf.Professor.Surname)
+	report.ScienceDegree = resProf.Professor.ScienceDegree
 
 	ep, err := p.uniRepo.GetEducationalProgrammeFullById(fmt.Sprint(student.EducationalProgrammeId))
 	if err != nil {
@@ -323,10 +326,11 @@ func (p *ProjectInteractor) AddProject(input inputdata.AddProject, cloudDrive in
 
 	// getting professor drive info, should be checked for existance later
 	found := true
-	driveInfo, err := p.accountRepo.GetAccountDriveData(fmt.Sprint(input.ProfessorId))
-	if err != nil {
-		if !errors.Is(err, models.ErrAccountDriveDataNotFound) {
-			return outputdata.AddProject{}, err
+	resChan := p.accountRepo.GetAccountDriveData(fmt.Sprint(input.ProfessorId))
+	resDrive := <-resChan
+	if resDrive.Err != nil {
+		if !errors.Is(resDrive.Err, models.ErrAccountDriveDataNotFound) {
+			return outputdata.AddProject{}, resDrive.Err
 		}
 		found = false
 	}
@@ -335,7 +339,7 @@ func (p *ProjectInteractor) AddProject(input inputdata.AddProject, cloudDrive in
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		// check for access token first????????????????????????????????????????????
 		token := &oauth2.Token{
-			RefreshToken: driveInfo.ApiKey,
+			RefreshToken: resDrive.CloudDriveIntegration.ApiKey,
 		}
 		err := cloudDrive.Authentificate(token)
 		if err != nil {
@@ -343,7 +347,7 @@ func (p *ProjectInteractor) AddProject(input inputdata.AddProject, cloudDrive in
 		}
 
 		// add folder to cloud
-		driveProject, err := cloudDrive.AddProjectFolder(proj.Project, driveInfo)
+		driveProject, err := cloudDrive.AddProjectFolder(proj.Project, resDrive.CloudDriveIntegration)
 		if err != nil {
 			return outputdata.AddProject{}, err
 		}

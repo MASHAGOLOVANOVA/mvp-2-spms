@@ -75,15 +75,16 @@ func (p *TaskInteractor) AddTask(input inputdata.AddTask, cloudDrive interfaces.
 
 	if folderFound {
 		// getting professor drive info, should be checked for existance later
-		driveInfo, err := p.accountRepo.GetAccountDriveData(fmt.Sprint(input.ProfessorId))
-		if err != nil {
-			return outputdata.AddTask{}, err
+		resChan := p.accountRepo.GetAccountDriveData(fmt.Sprint(input.ProfessorId))
+		resDrive := <-resChan
+		if resDrive.Err != nil {
+			return outputdata.AddTask{}, resDrive.Err
 		}
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		// check for access token first????????????????????????????????????????????
 		token := &oauth2.Token{
-			RefreshToken: driveInfo.ApiKey,
+			RefreshToken: resDrive.CloudDriveIntegration.ApiKey,
 		}
 
 		err = cloudDrive.Authentificate(token)
