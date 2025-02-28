@@ -10,8 +10,6 @@ RUN go mod download
 
 # Копируем остальное приложение
 COPY . .
-# Копируем файл server_config.json
-COPY web_server/cmd/web_app/server_config.json ./web_server/cmd/web_app/
 # Установка make
 RUN apt-get update && apt-get install -y make
 
