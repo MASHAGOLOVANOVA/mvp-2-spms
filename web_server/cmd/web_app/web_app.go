@@ -53,17 +53,15 @@ func main() {
 	}
 
 	var gdb *gorm.DB
-	gdb = nil
-	var err1 error
-	err1 = nil
 
-	gdb, err1 = gorm.Open(mysql.Open(dbConfig.ConnString), &gorm.Config{
+	// Открываем соединение с базой данных
+	gdb, err = gorm.Open(mysql.Open(dbConfig.ConnString), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			SingularTable: dbConfig.SingularTable, // use singular table name, table for `User` would be `user` with this option enabled
+			SingularTable: dbConfig.SingularTable, // использовать единственное имя таблицы
 		},
 	})
 
-	if err1 != nil {
+	if err != nil {
 		log.Fatal(err.Error())
 	}
 

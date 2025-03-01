@@ -556,7 +556,7 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 		// cleanup
 
 		profId, err := strconv.Atoi(resProf.Professor.Id)
-		assert.NoError(t, resProf.Err)
+		assert.NoError(t, err)
 		resErrChan := ar.DeleteProfessor(profId)
 		resErr := <-resErrChan
 		assert.NoError(t, resErr.Err)
