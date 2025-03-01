@@ -375,7 +375,7 @@ func (a *AccountInteractor) SignUp(input inputdata.SignUp) (outputdata.SignUp, e
 		Login: input.Login,
 		Hash:  passHash,
 		Salt:  salt,
-		Id:    prof.Id,
+		Id:    resProf.Professor.Id,
 	}
 
 	resChan1 := a.accountRepo.AddAccount(account)
