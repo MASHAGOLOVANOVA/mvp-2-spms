@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	domainaggregate "mvp-2-spms/domain-aggregate"
 	"mvp-2-spms/internal"
 	mngInterfaces "mvp-2-spms/services/interfaces"
@@ -35,7 +36,9 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -44,7 +47,9 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -79,7 +84,9 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if !errors.Is(err, models.ErrAccountPlannerDataNotFound) {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		found = false
@@ -105,13 +112,17 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 	meeting_id, err := h.meetingInteractor.AddMeeting(meetingInput, planner)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(meeting_id)
+	if err := json.NewEncoder(w).Encode(meeting_id); err != nil {
+		log.Printf("Ошибка при кодировании meeting id: %v", err)
+	}
 }
 
 func (h *MeetingHandler) GetMeetingStatusList(w http.ResponseWriter, r *http.Request) {
@@ -134,28 +145,36 @@ func (h *MeetingHandler) GetMeetingStatusList(w http.ResponseWriter, r *http.Req
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	from, err := time.Parse("2006-01-02T15:04:05.000Z", r.URL.Query().Get("from"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -169,7 +188,9 @@ func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Req
 		to, err := time.Parse("2006-01-02T15:04:05.000Z", toStr)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		input.To = to
@@ -184,7 +205,9 @@ func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		if !errors.Is(err, models.ErrAccountPlannerDataNotFound) {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		found = false
@@ -206,5 +229,7 @@ func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Req
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
