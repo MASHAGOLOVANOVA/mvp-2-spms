@@ -122,7 +122,9 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrAccountNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
@@ -145,7 +147,9 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrAccountNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
@@ -204,7 +208,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	if usernameExists {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode("username already exists")
+		if err := json.NewEncoder(w).Encode("username already exists"); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
