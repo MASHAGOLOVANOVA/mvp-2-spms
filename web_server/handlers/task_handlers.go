@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"log"
 	"encoding/json"
 	"errors"
+	"log"
 	domainaggregate "mvp-2-spms/domain-aggregate"
 	"mvp-2-spms/internal"
 	mngInterfaces "mvp-2-spms/services/interfaces"
@@ -263,7 +263,7 @@ func (h *TaskHandler) GetAllProjectTasks(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(result)); err != nil {
+	if err := json.NewEncoder(w).Encode(result); err != nil {
 		log.Printf("Ошибка при кодировании ответа: %v", err)
 	}
 }
