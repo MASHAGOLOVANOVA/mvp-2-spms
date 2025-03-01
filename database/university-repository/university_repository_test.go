@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var dsn = "root:root@tcp(127.0.0.1:3306)/student_project_management_testing?parseTime=true"
+var dsn = "root:root@tcp(127.0.0.1:3308)/student_project_management_test?parseTime=true"
 
 func connectDB() *database.Database {
 	gdb, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{
