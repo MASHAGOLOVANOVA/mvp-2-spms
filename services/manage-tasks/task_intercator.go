@@ -3,6 +3,7 @@ package managetasks
 import (
 	"errors"
 	"fmt"
+	"log"
 	"mvp-2-spms/services/interfaces"
 	"mvp-2-spms/services/manage-tasks/inputdata"
 	"mvp-2-spms/services/manage-tasks/outputdata"
@@ -99,7 +100,9 @@ func (p *TaskInteractor) AddTask(input inputdata.AddTask, cloudDrive interfaces.
 		}
 
 		// add folder id and file id from drive
-		p.taskRepo.AssignDriveTask(driveTask)
+		if err := p.taskRepo.AssignDriveTask(driveTask); err != nil {
+			log.Printf("Ошибка при назначении задачи: %v", err)
+		}
 	}
 
 	// returning id

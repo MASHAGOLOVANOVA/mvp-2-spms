@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"mvp-2-spms/internal"
 	"mvp-2-spms/services/manage-accounts/inputdata"
 	"mvp-2-spms/services/models"
@@ -29,14 +30,18 @@ func (h *GitRepoHandler) GetGitHubLink(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -46,13 +51,17 @@ func (h *GitRepoHandler) GetGitHubLink(w http.ResponseWriter, r *http.Request) {
 	result, err := h.repos[models.GitHub].GetAuthLink(redirectURI, int(uint(id)), returnURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
+	if _, err := w.Write([]byte(result)); err != nil {
+		log.Printf("Ошибка при получении интеграции с gitRepo: %v", err)
+	}
 }
 
 func (h *GitRepoHandler) OAuthCallbackGitHub(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +71,9 @@ func (h *GitRepoHandler) OAuthCallbackGitHub(w http.ResponseWriter, r *http.Requ
 	decodedState, err := base64.URLEncoding.DecodeString(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -72,7 +83,9 @@ func (h *GitRepoHandler) OAuthCallbackGitHub(w http.ResponseWriter, r *http.Requ
 	accountId, err := strconv.Atoi(params[0])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -87,7 +100,9 @@ func (h *GitRepoHandler) OAuthCallbackGitHub(w http.ResponseWriter, r *http.Requ
 	result, err := h.accountInteractor.SetRepoHubIntegration(input, h.repos[models.GitHub])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 

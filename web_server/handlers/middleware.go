@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"mvp-2-spms/web_server/session"
 	"net/http"
 )
@@ -24,7 +25,9 @@ func Authentificator(next http.Handler) http.Handler {
 			creds, err := GetCredentials(r)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(err.Error())
+				if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+					log.Printf("Ошибка при кодировании результата: %v", err)
+				}
 				return
 			}
 

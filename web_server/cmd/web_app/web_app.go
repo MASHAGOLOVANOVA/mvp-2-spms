@@ -110,5 +110,7 @@ func main() {
 		Integrations: integrations,
 	}
 	router := routes.SetupRouter(&app)
-	http.ListenAndServe(os.Getenv("SERVER_PORT"), router.Router())
+	if err := http.ListenAndServe(os.Getenv("SERVER_PORT"), router.Router()); err != nil {
+		log.Printf("Ошибка при настройке env: %v", err)
+	}
 }

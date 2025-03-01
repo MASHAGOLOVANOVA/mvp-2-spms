@@ -82,7 +82,10 @@ func TestProject_AddProject(t *testing.T) {
 		}
 		request.Header.Add("Session-Id", s)
 		request.Header.Add("Content-Type", "application/json")
-		result, _ := http.DefaultClient.Do(request) //выолняем запрос
+		result, err := http.DefaultClient.Do(request) // выполняем запрос
+		if err != nil {
+			log.Fatal(err) // Обработка ошибки
+		}
 		defer result.Body.Close()
 
 		body, err := io.ReadAll(result.Body)
@@ -113,7 +116,10 @@ func TestProject_AddProject(t *testing.T) {
 			log.Print(err)
 		}
 		request.Header.Add("Session-Id", s)
-		result, _ = http.DefaultClient.Do(request) //выолняем запрос
+		result, err = http.DefaultClient.Do(request) // выполняем запрос
+		if err != nil {
+			log.Fatal(err) // Обработка ошибки
+		}
 		defer result.Body.Close()
 
 		assert.Equal(t, result.StatusCode, http.StatusUnsupportedMediaType)
@@ -140,7 +146,10 @@ func TestProject_AddProject(t *testing.T) {
 		}
 		request.Header.Add("Session-Id", s)
 		request.Header.Add("Content-Type", "application/json")
-		result, _ := http.DefaultClient.Do(request) //выолняем запрос
+		result, err := http.DefaultClient.Do(request) // выполняем запрос
+		if err != nil {
+			log.Fatal(err) // Обработка ошибки
+		}
 		defer result.Body.Close()
 
 		body, err := io.ReadAll(result.Body)
@@ -172,7 +181,10 @@ func TestProject_AddProject(t *testing.T) {
 		}
 		request.Header.Add("Session-Id", s)
 		request.Header.Add("Content-Type", "application/json")
-		result, _ = http.DefaultClient.Do(request) //выолняем запрос
+		result, err = http.DefaultClient.Do(request) // выполняем запрос
+		if err != nil {
+			log.Fatal(err) // Обработка ошибки
+		}
 		defer result.Body.Close()
 
 		assert.Equal(t, result.StatusCode, http.StatusBadRequest)
@@ -199,7 +211,10 @@ func TestProject_AddProject(t *testing.T) {
 		}
 		request.Header.Add("Session-Id", s)
 		request.Header.Add("Content-Type", "application/json")
-		result, _ := http.DefaultClient.Do(request) //выолняем запрос
+		result, err := http.DefaultClient.Do(request) // выполняем запрос
+		if err != nil {
+			log.Fatal(err) // Обработка ошибки
+		}
 		defer result.Body.Close()
 
 		body, err := io.ReadAll(result.Body)
@@ -231,7 +246,10 @@ func TestProject_AddProject(t *testing.T) {
 		}
 		request.Header.Add("Session-Id", s)
 		request.Header.Add("Content-Type", "application/json")
-		result, _ = http.DefaultClient.Do(request) //выолняем запрос
+		result, err = http.DefaultClient.Do(request) // выполняем запрос
+		if err != nil {
+			log.Fatal(err) // Обработка ошибки
+		}
 		defer result.Body.Close()
 
 		assert.Equal(t, result.StatusCode, http.StatusOK)

@@ -61,7 +61,9 @@ func SetBotTokenFromJson(filename string) {
 		TelegramToken string `json:"telegram_bot_token"`
 	}{}
 	decoder := json.NewDecoder(f)
-	decoder.Decode(&bot)
+	if err := decoder.Decode(&bot); err != nil {
+		log.Fatal("unable to decode")
+	}
 
 	BotToken = bot.TelegramToken
 }

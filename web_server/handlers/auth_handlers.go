@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"mvp-2-spms/services/manage-accounts/inputdata"
 	"mvp-2-spms/services/models"
 	"mvp-2-spms/web_server/handlers/interfaces"
@@ -51,13 +52,17 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 	found, err := h.accountInteractor.CheckUsernameExists(inp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	if !found {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode("account with phone is not found")
+		if encodeErr := json.NewEncoder(w).Encode("account with phone is not found"); encodeErr != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", encodeErr)
+		}
 		return
 	}
 
@@ -68,7 +73,9 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 	profId, err := h.accountInteractor.GetAccountProfessorId(creds.Phone)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -82,7 +89,9 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -113,11 +122,15 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrAccountNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -134,11 +147,15 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrAccountNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -152,7 +169,9 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -181,13 +200,17 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	usernameExists, err := h.accountInteractor.CheckUsernameExists(input)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	if usernameExists {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode("username already exists")
+		if err := json.NewEncoder(w).Encode("username already exists"); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -204,7 +227,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	account, err := h.accountInteractor.SignUp(signupInput)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -222,7 +247,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
@@ -253,7 +280,9 @@ func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) RefreshSession(w http.ResponseWriter, r *http.Request) {
@@ -281,5 +310,7 @@ func (h *AuthHandler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }

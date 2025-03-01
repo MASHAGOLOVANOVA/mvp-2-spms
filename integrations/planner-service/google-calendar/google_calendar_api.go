@@ -1,6 +1,7 @@
 package googlecalendar
 
 import (
+	"log"
 	googleapi "mvp-2-spms/integrations/google-api"
 	"strings"
 	"time"
@@ -25,7 +26,9 @@ func InitCalendarApi(googleAPI googleapi.GoogleAPI) googleCalendarApi {
 }
 
 func (c *googleCalendarApi) AuthentificateService(token *oauth2.Token) error {
-	c.Authentificate(token)
+	if err := c.Authentificate(token); err != nil {
+		log.Printf("Ошибка при аутентификации в claendar: %v", err)
+	}
 
 	api, err := calendar.NewService(c.GetContext(), option.WithHTTPClient(c.GetClient()))
 	if err != nil {

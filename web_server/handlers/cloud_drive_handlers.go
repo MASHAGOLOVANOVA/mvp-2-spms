@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"mvp-2-spms/internal"
 	"mvp-2-spms/web_server/handlers/interfaces"
 	"net/http"
@@ -30,14 +31,18 @@ func (h *CloudDriveHandler) GetGoogleDriveLink(w http.ResponseWriter, r *http.Re
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -47,13 +52,17 @@ func (h *CloudDriveHandler) GetGoogleDriveLink(w http.ResponseWriter, r *http.Re
 	result, err := h.drives[models.GoogleDrive].GetAuthLink(redirectURI, int(uint(id)), returnURL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
+	if _, err := w.Write([]byte(result)); err != nil {
+		log.Printf("Ошибка при получении интеграции с cloudDrive: %v", err)
+	}
 }
 
 func (h *CloudDriveHandler) OAuthCallbackGoogleDrive(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +72,9 @@ func (h *CloudDriveHandler) OAuthCallbackGoogleDrive(w http.ResponseWriter, r *h
 	decodedState, err := base64.URLEncoding.DecodeString(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -72,7 +83,9 @@ func (h *CloudDriveHandler) OAuthCallbackGoogleDrive(w http.ResponseWriter, r *h
 	accountId, err := strconv.Atoi(params[0])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 	redirect := params[1]
@@ -86,7 +99,9 @@ func (h *CloudDriveHandler) OAuthCallbackGoogleDrive(w http.ResponseWriter, r *h
 	result, err := h.accountInteractor.SetDriveIntegration(input, h.drives[models.GoogleDrive])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 

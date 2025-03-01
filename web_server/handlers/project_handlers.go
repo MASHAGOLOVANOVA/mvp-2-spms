@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	domainaggregate "mvp-2-spms/domain-aggregate"
 	"mvp-2-spms/internal"
 	mngInterfaces "mvp-2-spms/services/interfaces"
@@ -40,14 +41,18 @@ func (h *ProjectHandler) GetAllProfProjects(w http.ResponseWriter, r *http.Reque
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -84,13 +89,17 @@ func (h *ProjectHandler) GetAllProfProjects(w http.ResponseWriter, r *http.Reque
 	result, err := h.projectInteractor.GetProfessorProjects(input)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании ответа: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProjectStatusList(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +126,9 @@ func (h *ProjectHandler) GetProjectStatusList(w http.ResponseWriter, r *http.Req
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProjectStageList(w http.ResponseWriter, r *http.Request) {
@@ -148,35 +159,45 @@ func (h *ProjectHandler) GetProjectStageList(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProjectCommits(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	projectId, err := strconv.ParseUint(chi.URLParam(r, "projectID"), 10, 32)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	from, err := time.Parse("2006-01-02T15:04:05.000Z", r.URL.Query().Get("from"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -189,7 +210,9 @@ func (h *ProjectHandler) GetProjectCommits(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		if !errors.Is(err, models.ErrAccountRepoHubDataNotFound) {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		found = false
@@ -197,7 +220,9 @@ func (h *ProjectHandler) GetProjectCommits(w http.ResponseWriter, r *http.Reques
 
 	if !found {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -212,34 +237,44 @@ func (h *ProjectHandler) GetProjectCommits(w http.ResponseWriter, r *http.Reques
 	result, err := h.projectInteractor.GetProjectCommits(input, h.repoHubs[models.GetRepoHubName(hubInfo.Type)])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	projectId, err := strconv.ParseUint(chi.URLParam(r, "projectID"), 10, 32)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -252,38 +287,50 @@ func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrProjectNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProjectSupReport(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	projectId, err := strconv.ParseUint(chi.URLParam(r, "projectID"), 10, 32)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -303,7 +350,9 @@ func (h *ProjectHandler) GetProjectSupReport(w http.ResponseWriter, r *http.Requ
 	result, err := h.projectInteractor.GetProjectSupReport(reqB)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -316,21 +365,27 @@ func (h *ProjectHandler) GetProjectStatistics(w http.ResponseWriter, r *http.Req
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	projectId, err := strconv.ParseUint(chi.URLParam(r, "projectID"), 10, 32)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -343,31 +398,41 @@ func (h *ProjectHandler) GetProjectStatistics(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		if errors.Is(err, models.ErrProjectNotFound) {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) AddProject(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -398,7 +463,9 @@ func (h *ProjectHandler) AddProject(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if !errors.Is(err, models.ErrAccountDriveDataNotFound) {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		found = false
@@ -423,34 +490,44 @@ func (h *ProjectHandler) AddProject(w http.ResponseWriter, r *http.Request) {
 	student_id, err := h.projectInteractor.AddProject(input, drive)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(student_id)
+	if err := json.NewEncoder(w).Encode(student_id); err != nil {
+		log.Printf("Ошибка при кодировании id студента: %v", err)
+	}
 }
 
 func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	projectId, err := strconv.ParseUint(chi.URLParam(r, "projectID"), 10, 32)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -488,11 +565,15 @@ func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, models.ErrProjectNotProfessors) {
 			w.WriteHeader(http.StatusForbidden)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -503,21 +584,27 @@ func (h *ProjectHandler) UpdateProjectGrading(w http.ResponseWriter, r *http.Req
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
 	projectId, err := strconv.ParseUint(chi.URLParam(r, "projectID"), 10, 32)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -546,11 +633,15 @@ func (h *ProjectHandler) UpdateProjectGrading(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		if errors.Is(err, models.ErrProjectNotProfessors) {
 			w.WriteHeader(http.StatusForbidden)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
