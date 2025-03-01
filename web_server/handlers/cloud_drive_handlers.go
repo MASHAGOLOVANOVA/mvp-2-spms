@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"mvp-2-spms/internal"
 	"mvp-2-spms/web_server/handlers/interfaces"
 	"net/http"
@@ -53,7 +54,9 @@ func (h *CloudDriveHandler) GetGoogleDriveLink(w http.ResponseWriter, r *http.Re
 
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
+	if _, err := w.Write([]byte(result)); err != nil {
+		log.Printf("Ошибка при получении интеграции с cloudDrive: %v", err)
+	}
 }
 
 func (h *CloudDriveHandler) OAuthCallbackGoogleDrive(w http.ResponseWriter, r *http.Request) {

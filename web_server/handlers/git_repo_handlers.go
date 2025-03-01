@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log"
 	"mvp-2-spms/internal"
 	"mvp-2-spms/services/manage-accounts/inputdata"
 	"mvp-2-spms/services/models"
@@ -52,7 +53,9 @@ func (h *GitRepoHandler) GetGitHubLink(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
+	if _, err := w.Write([]byte(result)); err != nil {
+		log.Printf("Ошибка при получении интеграции с gitRepo: %v", err)
+	}
 }
 
 func (h *GitRepoHandler) OAuthCallbackGitHub(w http.ResponseWriter, r *http.Request) {

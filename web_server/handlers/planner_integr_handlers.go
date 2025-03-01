@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"mvp-2-spms/internal"
 	ainputdata "mvp-2-spms/services/manage-accounts/inputdata"
 	"mvp-2-spms/services/models"
@@ -133,7 +134,9 @@ func (h *PlannerIntegrationHandler) GetGoogleCalendarLink(w http.ResponseWriter,
 
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(result))
+	if _, err := w.Write([]byte(result)); err != nil {
+		log.Printf("Ошибка при получении интеграции с planner: %v", err)
+	}
 }
 
 func (h *PlannerIntegrationHandler) OAuthCallbackGoogleCalendar(w http.ResponseWriter, r *http.Request) {

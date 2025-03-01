@@ -1,6 +1,7 @@
 package meetingrepository
 
 import (
+	"log"
 	"mvp-2-spms/database"
 	accountrepository "mvp-2-spms/database/account-repository"
 	studentrepository "mvp-2-spms/database/student-repository"
@@ -631,6 +632,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		assert.NoError(t, err)
 		meetsAfterTo = append(meetsAfterTo, meet)
 
+		log.Printf("%v", meetsAfterTo)
 		// act
 		foundMeets, err := mr.GetProfessorMeetings(prof.Id, fromTime, fromTime.Add(time.Hour*5))
 

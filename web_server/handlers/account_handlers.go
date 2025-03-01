@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"mvp-2-spms/internal"
 	"mvp-2-spms/services/manage-accounts/inputdata"
 	"mvp-2-spms/services/models"
@@ -35,7 +36,9 @@ func (h *AccountHandler) GetAccountIntegrations(w http.ResponseWriter, r *http.R
 	id, err := strconv.Atoi(user.GetProfId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при получений интеграций c: %v", err)
+		}
 		return
 	}
 
@@ -46,7 +49,9 @@ func (h *AccountHandler) GetAccountIntegrations(w http.ResponseWriter, r *http.R
 	result, err := h.accountInteractor.GetAccountIntegrations(input)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при получений интеграций: %v", err)
+		}
 		return
 	}
 
@@ -55,7 +60,9 @@ func (h *AccountHandler) GetAccountIntegrations(w http.ResponseWriter, r *http.R
 			result.CloudDrive.BaseFolderId, fmt.Sprint(id), h.cloudDrives[models.CloudDriveName(result.CloudDrive.Type.Id)])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err.Error())
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при получений интеграций c cloud drive: %v", err)
+			}
 			return
 		}
 	}

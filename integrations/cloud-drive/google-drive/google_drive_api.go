@@ -2,6 +2,7 @@ package clouddrive
 
 import (
 	"fmt"
+	"log"
 	googleapi "mvp-2-spms/integrations/google-api"
 	"strings"
 
@@ -27,7 +28,9 @@ func InitDriveApi(googleAPI googleapi.GoogleAPI) googleDriveApi {
 }
 
 func (d *googleDriveApi) AuthentificateService(token *oauth2.Token) error {
-	d.Authentificate(token)
+	if err := d.Authentificate(token); err != nil {
+		log.Printf("Ошибка при аутентификации CloudDrive: %v", err)
+	}
 
 	api, err := drive.NewService(d.GetContext(), option.WithHTTPClient(d.GetClient()))
 	if err != nil {
