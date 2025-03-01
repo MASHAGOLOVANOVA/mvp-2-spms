@@ -126,7 +126,9 @@ func (h *ProjectHandler) GetProjectStatusList(w http.ResponseWriter, r *http.Req
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProjectStageList(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +245,9 @@ func (h *ProjectHandler) GetProjectCommits(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
