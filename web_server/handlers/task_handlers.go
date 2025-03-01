@@ -223,7 +223,7 @@ func (h *TaskHandler) GetAllProjectTasks(w http.ResponseWriter, r *http.Request)
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		jif err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
 			log.Printf("Ошибка при кодировании ответа: %v", err)
 		}
 		return
