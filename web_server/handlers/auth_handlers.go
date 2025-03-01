@@ -73,7 +73,9 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 	profId, err := h.accountInteractor.GetAccountProfessorId(creds.Phone)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -87,7 +89,9 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +165,9 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +241,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
@@ -266,7 +274,9 @@ func (h *AuthHandler) SignOut(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
 
 func (h *AuthHandler) RefreshSession(w http.ResponseWriter, r *http.Request) {
@@ -294,5 +304,7 @@ func (h *AuthHandler) RefreshSession(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resBody)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
 }
