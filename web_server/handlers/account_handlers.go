@@ -29,7 +29,9 @@ func (h *AccountHandler) GetAccountIntegrations(w http.ResponseWriter, r *http.R
 	user, err := GetSessionUser(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
