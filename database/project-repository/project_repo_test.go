@@ -20,7 +20,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var dsn = "root:root@tcp(127.0.0.1:3306)/student_project_management_testing?parseTime=true"
+var dsn = "root:root@tcp(127.0.0.1:3308)/student_project_management_test?parseTime=true"
 
 func connectDB() *database.Database {
 	gdb, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -77,7 +77,7 @@ func TestProjectRepo_CreateProject(t *testing.T) {
 		pr := InitProjectRepository(*db)
 		ar := accountrepository.InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -85,12 +85,13 @@ func TestProjectRepo_CreateProject(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		// act
-		_, err = pr.CreateProject(domainaggregate.Project{
+		_, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    "122",
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -101,10 +102,11 @@ func TestProjectRepo_CreateProject(t *testing.T) {
 		assert.Error(t, err)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
@@ -124,7 +126,7 @@ func TestProjectRepo_CreateProject(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -132,12 +134,13 @@ func TestProjectRepo_CreateProject(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		// act
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -157,10 +160,11 @@ func TestProjectRepo_CreateProject(t *testing.T) {
 		assert.Equal(t, proj.Year, foundProj.Year)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -220,7 +224,7 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 		pr := InitProjectRepository(*db)
 		ar := accountrepository.InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -228,7 +232,8 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		repo := usecasemodels.Repository{
 			RepoId:    "23",
@@ -237,9 +242,9 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 		}
 
 		// act
-		_, err = pr.CreateProjectWithRepository(domainaggregate.Project{
+		_, err := pr.CreateProjectWithRepository(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    "122",
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -250,10 +255,11 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 		assert.Error(t, err)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 
 	t.Run("ok", func(t *testing.T) {
@@ -272,7 +278,7 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -280,7 +286,8 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		repo := usecasemodels.Repository{
 			RepoId:    "23",
@@ -291,7 +298,7 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 		// act
 		proj, err := pr.CreateProjectWithRepository(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -317,10 +324,11 @@ func TestProjectRepo_CreateProjectWithRepository(t *testing.T) {
 		assert.Equal(t, repo.RepoType, foundRepo.RepoType)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -363,7 +371,7 @@ func TestProjectRepo_GetProfessorProjects(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -371,13 +379,14 @@ func TestProjectRepo_GetProfessorProjects(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		projs := []domainaggregate.Project{}
 		for i := 0; i < 10; i++ {
 			proj, err := pr.CreateProject(domainaggregate.Project{
 				Theme:        fmt.Sprint(i),
-				SupervisorId: prof.Id,
+				SupervisorId: resProf.Professor.Id,
 				StudentId:    stud.Id,
 				Year:         2023,
 				Stage:        domainaggregate.Analysis,
@@ -388,7 +397,7 @@ func TestProjectRepo_GetProfessorProjects(t *testing.T) {
 		}
 
 		// act
-		foundProjs, err := pr.GetProfessorProjects(prof.Id)
+		foundProjs, err := pr.GetProfessorProjects(resProf.Professor.Id)
 
 		// assert
 		assert.NoError(t, err)
@@ -405,10 +414,11 @@ func TestProjectRepo_GetProfessorProjects(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -448,7 +458,7 @@ func TestProjectRepo_GetProjectById(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -456,10 +466,11 @@ func TestProjectRepo_GetProjectById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -482,10 +493,11 @@ func TestProjectRepo_GetProjectById(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -513,7 +525,7 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -521,10 +533,12 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -541,10 +555,11 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
-		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
+		assert.NoError(t, resProf.Err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -569,7 +584,7 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -577,10 +592,11 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -591,7 +607,7 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          time.Now().UTC().Add(time.Hour * 8),
 			IsOnline:      true,
@@ -609,10 +625,11 @@ func TestProjectRepo_GetProjectMeetingInfoById(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -644,7 +661,7 @@ func TestProjectRepo_GetProjectTaskInfoById(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -652,10 +669,11 @@ func TestProjectRepo_GetProjectTaskInfoById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -674,10 +692,11 @@ func TestProjectRepo_GetProjectTaskInfoById(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -702,7 +721,7 @@ func TestProjectRepo_GetProjectTaskInfoById(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -710,10 +729,11 @@ func TestProjectRepo_GetProjectTaskInfoById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -741,10 +761,11 @@ func TestProjectRepo_GetProjectTaskInfoById(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -795,7 +816,7 @@ func TestProjectRepo_AssignDriveFolder(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -803,10 +824,11 @@ func TestProjectRepo_AssignDriveFolder(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -835,10 +857,11 @@ func TestProjectRepo_AssignDriveFolder(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -879,7 +902,7 @@ func TestProjectRepo_GetProjectCloudFolderId(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -887,10 +910,11 @@ func TestProjectRepo_GetProjectCloudFolderId(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -906,10 +930,11 @@ func TestProjectRepo_GetProjectCloudFolderId(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -933,7 +958,7 @@ func TestProjectRepo_GetProjectCloudFolderId(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -941,10 +966,11 @@ func TestProjectRepo_GetProjectCloudFolderId(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -971,10 +997,11 @@ func TestProjectRepo_GetProjectCloudFolderId(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -1016,7 +1043,7 @@ func TestProjectRepo_GetProjectFolderLink(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -1024,10 +1051,11 @@ func TestProjectRepo_GetProjectFolderLink(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
+		resProf := <-resProfChan
 		assert.NoError(t, err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -1043,10 +1071,11 @@ func TestProjectRepo_GetProjectFolderLink(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -1070,7 +1099,7 @@ func TestProjectRepo_GetProjectFolderLink(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -1078,10 +1107,11 @@ func TestProjectRepo_GetProjectFolderLink(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
+		resProf := <-resProfChan
 		assert.NoError(t, err)
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -1108,10 +1138,11 @@ func TestProjectRepo_GetProjectFolderLink(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -1171,7 +1202,7 @@ func TestProjectRepo_GetStudentCurrentProject(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -1179,11 +1210,12 @@ func TestProjectRepo_GetStudentCurrentProject(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -1206,10 +1238,11 @@ func TestProjectRepo_GetStudentCurrentProject(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -1249,7 +1282,7 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -1257,11 +1290,12 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		proj, err := pr.CreateProject(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -1277,10 +1311,11 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -1304,7 +1339,7 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -1312,7 +1347,8 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		repo := usecasemodels.Repository{
 			RepoId:    time.Now().Format(time.RFC3339),
@@ -1321,7 +1357,7 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 		}
 		proj, err := pr.CreateProjectWithRepository(domainaggregate.Project{
 			Theme:        time.Now().Format(time.RFC3339),
-			SupervisorId: prof.Id,
+			SupervisorId: resProf.Professor.Id,
 			StudentId:    stud.Id,
 			Year:         2023,
 			Stage:        domainaggregate.Analysis,
@@ -1340,10 +1376,12 @@ func TestProjectRepo_GetProjectRepository(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)

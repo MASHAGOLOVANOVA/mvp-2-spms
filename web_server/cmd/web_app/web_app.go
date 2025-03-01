@@ -56,13 +56,13 @@ func main() {
 	gdb = nil
 	var err1 error
 	err1 = nil
-	for i := 0; i < 20; i++ {
-		gdb, err1 = gorm.Open(mysql.Open(dbConfig.ConnString), &gorm.Config{
-			NamingStrategy: schema.NamingStrategy{
-				SingularTable: dbConfig.SingularTable, // use singular table name, table for `User` would be `user` with this option enabled
-			},
-		})
-	}
+
+	gdb, err1 = gorm.Open(mysql.Open(dbConfig.ConnString), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: dbConfig.SingularTable, // use singular table name, table for `User` would be `user` with this option enabled
+		},
+	})
+
 	if err1 != nil {
 		log.Fatal(err.Error())
 	}
