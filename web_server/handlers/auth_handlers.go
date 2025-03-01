@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"mvp-2-spms/services/manage-accounts/inputdata"
 	"mvp-2-spms/services/models"
 	"mvp-2-spms/web_server/handlers/interfaces"
@@ -57,7 +58,9 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 
 	if !found {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode("account with phone is not found")
+		if encodeErr := json.NewEncoder(w).Encode("account with phone is not found"); encodeErr != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", encodeErr)
+		}
 		return
 	}
 
@@ -181,7 +184,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	usernameExists, err := h.accountInteractor.CheckUsernameExists(input)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
@@ -204,7 +209,9 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	account, err := h.accountInteractor.SignUp(signupInput)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
 		return
 	}
 
