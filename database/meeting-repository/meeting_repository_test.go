@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var dsn = "root:root@tcp(127.0.0.1:3306)/student_project_management_testing?parseTime=true"
+var dsn = "root:root@tcp(127.0.0.1:3308)/student_project_management_test?parseTime=true"
 
 func connectDB() *database.Database {
 	gdb, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -74,7 +74,7 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 		mr := InitMeetingRepository(*db)
 		ar := accountrepository.InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -82,13 +82,14 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		// act
-		_, err = mr.CreateMeeting(domainaggregate.Meeting{
+		_, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: "123",
 			Time:          time.Now().UTC(),
 			IsOnline:      true,
@@ -99,10 +100,11 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 		assert.Error(t, err)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 
 	t.Run("fail, bad project id", func(t *testing.T) {
@@ -122,7 +124,7 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -130,13 +132,14 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		// act
 		_, err = mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			ProjectId:     "1243",
 			Time:          time.Now().UTC(),
@@ -148,10 +151,11 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 		assert.Error(t, err)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -165,7 +169,7 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 		ar := accountrepository.InitAccountRepository(*db)
 		sr := studentrepository.InitStudentRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -173,7 +177,8 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		stud, err := sr.CreateStudent(domainaggregate.Student{
 			Person: domainaggregate.Person{
@@ -190,7 +195,7 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          time.Now().UTC().Round(time.Second),
 			IsOnline:      true,
@@ -212,10 +217,11 @@ func TestMeetingRepo_CreateMeeting(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -247,7 +253,7 @@ func TestMeetingRepo_AssignPlannerMeeting(t *testing.T) {
 		ar := accountrepository.InitAccountRepository(*db)
 		sr := studentrepository.InitStudentRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -255,7 +261,8 @@ func TestMeetingRepo_AssignPlannerMeeting(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		stud, err := sr.CreateStudent(domainaggregate.Student{
 			Person: domainaggregate.Person{
@@ -271,7 +278,7 @@ func TestMeetingRepo_AssignPlannerMeeting(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          time.Now().UTC(),
 			IsOnline:      true,
@@ -295,10 +302,11 @@ func TestMeetingRepo_AssignPlannerMeeting(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -327,7 +335,7 @@ func TestMeetingRepo_GetMeetingById(t *testing.T) {
 		ar := accountrepository.InitAccountRepository(*db)
 		sr := studentrepository.InitStudentRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -335,7 +343,8 @@ func TestMeetingRepo_GetMeetingById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		stud, err := sr.CreateStudent(domainaggregate.Student{
 			Person: domainaggregate.Person{
@@ -351,7 +360,7 @@ func TestMeetingRepo_GetMeetingById(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          time.Now().UTC().Round(time.Second),
 			IsOnline:      true,
@@ -375,10 +384,11 @@ func TestMeetingRepo_GetMeetingById(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -407,7 +417,7 @@ func TestMeetingRepo_GetMeetingPlannerId(t *testing.T) {
 		ar := accountrepository.InitAccountRepository(*db)
 		sr := studentrepository.InitStudentRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -415,7 +425,8 @@ func TestMeetingRepo_GetMeetingPlannerId(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		stud, err := sr.CreateStudent(domainaggregate.Student{
 			Person: domainaggregate.Person{
@@ -431,7 +442,7 @@ func TestMeetingRepo_GetMeetingPlannerId(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          time.Now(),
 			IsOnline:      true,
@@ -455,10 +466,11 @@ func TestMeetingRepo_GetMeetingPlannerId(t *testing.T) {
 
 		// cleanup
 
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -489,7 +501,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		ar := accountrepository.InitAccountRepository(*db)
 		sr := studentrepository.InitStudentRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -497,7 +509,8 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		stud, err := sr.CreateStudent(domainaggregate.Student{
 			Person: domainaggregate.Person{
@@ -515,7 +528,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          fromTime.Add(time.Hour * 4),
 			IsOnline:      true,
@@ -527,7 +540,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meet, err = mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          fromTime.Add(time.Hour * 5),
 			IsOnline:      true,
@@ -537,7 +550,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meets = append(meets, meet)
 
 		// act
-		foundMeets, err := mr.GetProfessorMeetings(prof.Id, fromTime, time.Time{})
+		foundMeets, err := mr.GetProfessorMeetings(resProf.Professor.Id, fromTime, time.Time{})
 
 		// assert
 		assert.NoError(t, err)
@@ -554,10 +567,11 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		}
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
@@ -571,7 +585,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		ar := accountrepository.InitAccountRepository(*db)
 		sr := studentrepository.InitStudentRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -579,7 +593,8 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		stud, err := sr.CreateStudent(domainaggregate.Student{
 			Person: domainaggregate.Person{
@@ -597,7 +612,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meet, err := mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          fromTime.Add(time.Hour * 2),
 			IsOnline:      true,
@@ -609,7 +624,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meet, err = mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          fromTime.Add(time.Hour * 3),
 			IsOnline:      true,
@@ -622,7 +637,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meet, err = mr.CreateMeeting(domainaggregate.Meeting{
 			Name:          time.Now().Format(time.RFC3339),
 			Description:   "lwefl",
-			OrganizerId:   prof.Id,
+			OrganizerId:   resProf.Professor.Id,
 			ParticipantId: stud.Id,
 			Time:          fromTime.Add(time.Hour * 8),
 			IsOnline:      true,
@@ -632,7 +647,7 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		meetsAfterTo = append(meetsAfterTo, meet)
 
 		// act
-		foundMeets, err := mr.GetProfessorMeetings(prof.Id, fromTime, fromTime.Add(time.Hour*5))
+		foundMeets, err := mr.GetProfessorMeetings(resProf.Professor.Id, fromTime, fromTime.Add(time.Hour*5))
 
 		// assert
 		assert.NoError(t, err)
@@ -649,10 +664,11 @@ func TestMeetingRepo_GetProfessorMeetings(t *testing.T) {
 		}
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		studId, err := strconv.Atoi(stud.Id)
 		assert.NoError(t, err)
