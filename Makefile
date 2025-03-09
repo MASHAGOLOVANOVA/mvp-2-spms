@@ -18,3 +18,7 @@ run-commands-to-build-go-student: ## вызываются при запуске 
 	go mod download
 	go build -o ./web_server/cmd/student-service/student-service ./web_server/cmd/student-service/
 
+run-commands-to-build-go-uni:
+	go mod download
+	go build -o ./web_server/cmd/university-service/university-service ./web_server/cmd/university-service/
+
