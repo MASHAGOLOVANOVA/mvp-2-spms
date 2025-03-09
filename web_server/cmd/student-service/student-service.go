@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"mvp-2-spms/database"
 	"mvp-2-spms/internal"
+	"mvp-2-spms/services/manage-students/inputdata"
 	"mvp-2-spms/student-service/config"
 	projectrepository "mvp-2-spms/student-service/database/project-repository"
 	studentrepository "mvp-2-spms/student-service/database/student-repository"
@@ -15,6 +17,7 @@ import (
 
 	"mvp-2-spms/student-service/routes"
 
+	"github.com/streadway/amqp"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -67,6 +70,68 @@ func main() {
 		Intercators:  interactors,
 		Integrations: integrations,
 	}
+
+	//rabbitmq
+
+	conn, err := amqp.Dial("amqp://user:password@rabbitmq:5672/")
+	if err != nil {
+		log.Fatalf("Ошибка подключения к RabbitMQ: %s", err)
+	}
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatalf("Ошибка открытия канала: %s", err)
+	}
+	defer ch.Close()
+
+	q, err := ch.QueueDeclare(
+		"student_queue", // имя очереди
+		false,           // durable
+		false,           // delete when unused
+		false,           // exclusive
+		false,           // no-wait
+		nil,             // аргументы
+	)
+	if err != nil {
+		log.Fatalf("Ошибка объявления очереди: %s", err)
+	}
+
+	// ... остальной код для обработки сообщений ...
+	go func() {
+		for {
+			msgs, err := ch.Consume(
+				q.Name, // имя очереди
+				"",     // имя потребителя
+				true,   // auto-ack
+				false,  // exclusive
+				false,  // no-local
+				false,  // no-wait
+				nil,    // аргументы
+			)
+			if err != nil {
+				log.Fatalf("Ошибка потребления: %s", err)
+			}
+
+			for d := range msgs {
+				log.Printf("Получено сообщение: %s", d.Body) // Отладочное сообщение
+				var input inputdata.AddStudent
+				if err := json.Unmarshal(d.Body, &input); err != nil {
+					log.Printf("Ошибка декодирования сообщения: %s", err)
+					continue
+				}
+
+				// Обработка добавления студента
+				studentID, err := app.Intercators.StudentManager.AddStudent(input)
+				if err != nil {
+					log.Printf("Ошибка добавления студента: %s", err)
+					continue
+				}
+
+				log.Printf("Студент добавлен с ID: %d", studentID)
+			}
+		}
+	}()
 
 	router := routes.SetupRouter(&app)
 	if err := http.ListenAndServe(os.Getenv("SERVER_PORT"), router.Router()); err != nil {
