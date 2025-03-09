@@ -8,10 +8,36 @@ services:
         dockerfile: build.Dockerfile
     container_name: web-spams-container
     ports:
-      - "8080:8080" # Измените на нужный порт вашего приложения
+      - "8080:8080"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+  student-service:
+    build:
+        context: .
+        dockerfile: student.Dockerfile
+    container_name: student-service-container
+    ports:
+      - "8090:8090"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+  uni-service:
+    build:
+        context: .
+        dockerfile: uni.Dockerfile
+    container_name: uni-service-container
+    ports:
+      - "8070:8070"
+    depends_on:
+      mysql:
+        condition: service_healthy
   mysql:
+    build:
+        context: .
+        dockerfile: db.Dockerfile
     image: mysql:latest
     container_name: mysql-container
     volumes:
@@ -20,9 +46,48 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: student_project_management
       MYSQL_USER: owner
-      MYSQL_PASSWORD: klotorol159.M
+      MYSQL_PASSWORD: root
     ports: 
       - 3307:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  mysql_test:
+    build: 
+      context: .
+      dockerfile: testdb.Dockerfile
+    image: mysql:latest
+    container_name: mysql-test-container
+    volumes:
+      - SPAMSDB_TEST:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: student_project_management_test
+      MYSQL_USER: owner
+      MYSQL_PASSWORD: root
+    ports: 
+      - 3308:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-container
+    ports:
+      - "5672:5672"  
+      - "15672:15672" 
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 volumes:
-  SPAMSDB:    
-    external: true
+  SPAMSDB:
+  SPAMSDB_TEST:

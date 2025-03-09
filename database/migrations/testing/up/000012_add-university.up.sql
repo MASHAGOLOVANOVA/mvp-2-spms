@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS university (
+    id INT NOT NULL auto_increment,
+    name VARCHAR(150) NOT NULL,
+    city_id INT NOT NULL DEFAULT 1,
+    PRIMARY KEY(id),
+    FOREIGN KEY (city_id) REFERENCES city(id) ON DELETE CASCADE ON UPDATE CASCADE
+);

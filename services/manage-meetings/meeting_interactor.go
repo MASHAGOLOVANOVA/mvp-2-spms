@@ -39,10 +39,11 @@ func (m *MeetingInteractor) AddMeeting(input inputdata.AddMeeting, planner inter
 
 	// getting calendar info, should be checked for existance later
 	plannerFound := true
-	plannerInfo, err := m.accountRepo.GetAccountPlannerData(fmt.Sprint(input.ProfessorId))
-	if err != nil {
-		if !errors.Is(err, models.ErrAccountPlannerDataNotFound) {
-			return outputdata.AddMeeting{}, err
+	resChan := m.accountRepo.GetAccountPlannerData(fmt.Sprint(input.ProfessorId))
+	resPlanner := <-resChan
+	if resPlanner.Err != nil {
+		if !errors.Is(resPlanner.Err, models.ErrAccountPlannerDataNotFound) {
+			return outputdata.AddMeeting{}, resPlanner.Err
 		}
 		plannerFound = false
 	}
@@ -52,7 +53,7 @@ func (m *MeetingInteractor) AddMeeting(input inputdata.AddMeeting, planner inter
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		// check for access token first????????????????????????????????????????????
 		token := &oauth2.Token{
-			RefreshToken: plannerInfo.ApiKey,
+			RefreshToken: resPlanner.PlannerIntegration.ApiKey,
 		}
 
 		err = planner.Authentificate(token)
@@ -61,7 +62,7 @@ func (m *MeetingInteractor) AddMeeting(input inputdata.AddMeeting, planner inter
 		}
 
 		// add meeting to calendar
-		meeitngPlanner, err = planner.AddMeeting(meeting, plannerInfo)
+		meeitngPlanner, err = planner.AddMeeting(meeting, resPlanner.PlannerIntegration)
 		if err != nil {
 			return outputdata.AddMeeting{}, err
 		}
@@ -88,10 +89,11 @@ func (m *MeetingInteractor) GetProfessorMeetings(input inputdata.GetProfessorMee
 	meetEntities := []outputdata.GetProfesorMeetingsEntities{}
 	// getting calendar info, should be checked for existance later
 	plannerFound := true
-	plannerInfo, err := m.accountRepo.GetAccountPlannerData(fmt.Sprint(input.ProfessorId))
-	if err != nil {
-		if !errors.Is(err, models.ErrAccountPlannerDataNotFound) {
-			return outputdata.GetProfesorMeetings{}, err
+	resChan := m.accountRepo.GetAccountPlannerData(fmt.Sprint(input.ProfessorId))
+	resPlanner := <-resChan
+	if resPlanner.Err != nil {
+		if !errors.Is(resPlanner.Err, models.ErrAccountPlannerDataNotFound) {
+			return outputdata.GetProfesorMeetings{}, resPlanner.Err
 		}
 		plannerFound = false
 	}
@@ -101,7 +103,7 @@ func (m *MeetingInteractor) GetProfessorMeetings(input inputdata.GetProfessorMee
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		// check for access token first????????????????????????????????????????????
 		token := &oauth2.Token{
-			RefreshToken: plannerInfo.ApiKey,
+			RefreshToken: resPlanner.PlannerIntegration.ApiKey,
 		}
 
 		err = planner.Authentificate(token)
@@ -109,7 +111,7 @@ func (m *MeetingInteractor) GetProfessorMeetings(input inputdata.GetProfessorMee
 			return outputdata.GetProfesorMeetings{}, err
 		}
 
-		plannerMetingsIds, err = planner.GetScheduleMeetingIds(input.From, plannerInfo)
+		plannerMetingsIds, err = planner.GetScheduleMeetingIds(input.From, resPlanner.PlannerIntegration)
 		if err != nil {
 			return outputdata.GetProfesorMeetings{}, err
 		}
