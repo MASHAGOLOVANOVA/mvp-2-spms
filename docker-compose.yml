@@ -12,6 +12,16 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+  student-service:
+    build:
+        context: .
+        dockerfile: student.Dockerfile
+    container_name: student-service-container
+    ports:
+      - "8090:8090"
+    depends_on:
+      mysql:
+        condition: service_healthy
   mysql:
     build:
         context: .
