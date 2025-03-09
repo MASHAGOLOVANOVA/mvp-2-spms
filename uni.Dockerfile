@@ -14,7 +14,7 @@ COPY . .
 RUN apt-get update && apt-get install -y make
 
 # Выполнение команды сборки из Makefile
-RUN make run-commands-to-build-go-student
+RUN make run-commands-to-build-go-uni
 
 CMD ["./web_server/cmd/university-service/university-service"]
 
