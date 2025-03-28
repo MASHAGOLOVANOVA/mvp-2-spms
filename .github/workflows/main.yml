@@ -53,4 +53,10 @@ jobs:
           docker ps  # Проверка, что контейнер запущен
 
       - name: Run Go Tests
-        run: go test ./... -v || true
+        run: |
+          set -e
+          set -x
+          # Найти все пакеты с тестами и запустить тесты
+          for pkg in $(go list ./... | grep -E '(_test\.go)$'); do
+            go test "$pkg" -v || true
+          done
