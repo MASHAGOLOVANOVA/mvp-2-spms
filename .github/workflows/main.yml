@@ -45,6 +45,7 @@ jobs:
       - name: Build MySQL Test Image
         run: |
           docker build -t mysql_test -f testdb.Dockerfile .
+          docker build -t web -f build.Dockerfile .
           docker images  # Проверка, что образ был создан
 
       - name: Run MySQL Test Container
