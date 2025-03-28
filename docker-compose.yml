@@ -2,6 +2,15 @@ version: '2.1'
 
 name: spams-container
 services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx-container
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
   web:
     build:
         context: .
@@ -9,6 +18,16 @@ services:
     container_name: web-spams-container
     ports:
       - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+  web1:
+    build:
+      context: .
+      dockerfile: build.Dockerfile
+    container_name: web-spams-container-1
+    ports:
+      - "8081:8080" 
     depends_on:
       mysql:
         condition: service_healthy
