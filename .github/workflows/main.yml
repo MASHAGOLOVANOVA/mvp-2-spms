@@ -37,6 +37,7 @@ jobs:
       - name: Build MySQL Test Image
         run: |
           docker build -t mysql_test -f testdb.Dockerfile .
+          docker images  # Проверка, что образ был создан
 
   test:
     runs-on: ubuntu-latest
@@ -57,6 +58,7 @@ jobs:
       - name: Run MySQL Test Container
         run: |
           docker run --name mysql-test-container -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=student_project_management_test -e MYSQL_USER=owner -e MYSQL_PASSWORD=root -p 3308:3306 -d mysql_test
+          docker ps  # Проверка, что контейнер запущен
 
       - name: Run Go Tests
         run: go test ./... -v
