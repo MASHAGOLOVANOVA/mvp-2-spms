@@ -56,7 +56,11 @@ jobs:
         run: |
           set -e
           set -x
-          # Найти все пакеты с тестами и запустить тесты
-          for pkg in $(go list ./... | grep -E '(_test\.go)$'); do
-            go test "$pkg" -v || true
+          # Запуск тестов для всех пакетов
+          for pkg in $(go list ./...); do
+            if go test "$pkg" -v; then
+              echo "Tests passed for package: $pkg"
+            else
+              echo "Tests failed for package: $pkg"
+            fi
           done
