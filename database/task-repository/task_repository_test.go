@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var dsn = "root:root@tcp(127.0.0.1:3306)/student_project_management_testing?parseTime=true"
+var dsn = "root:root@tcp(127.0.0.1:3308)/student_project_management_test?parseTime=true"
 
 func connectDB() *database.Database {
 	gdb, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -47,7 +47,7 @@ func createProj(db *database.Database) (domainaggregate.Project, error) {
 		return domainaggregate.Project{}, err
 	}
 
-	prof, err := ar.AddProfessor(domainaggregate.Professor{
+	resprofChan := ar.AddProfessor(domainaggregate.Professor{
 		Person: domainaggregate.Person{
 			Name:       "dsf",
 			Surname:    "sdf",
@@ -55,13 +55,14 @@ func createProj(db *database.Database) (domainaggregate.Project, error) {
 		},
 		ScienceDegree: time.Now().Format(time.RFC3339),
 	})
-	if err != nil {
+	resProf := <-resprofChan
+	if resProf.Err != nil {
 		return domainaggregate.Project{}, err
 	}
 
 	proj, err := pr.CreateProject(domainaggregate.Project{
 		Theme:        time.Now().Format(time.RFC3339),
-		SupervisorId: prof.Id,
+		SupervisorId: resProf.Professor.Id,
 		StudentId:    stud.Id,
 		Year:         2023,
 		Stage:        domainaggregate.Analysis,
@@ -82,9 +83,10 @@ func deleteProj(db *database.Database, proj domainaggregate.Project) error {
 	if err != nil {
 		return err
 	}
-	err = ar.DeleteProfessor(profId)
-	if err != nil {
-		return err
+	resErrChan := ar.DeleteProfessor(profId)
+	resErr := <-resErrChan
+	if resErr.Err != nil {
+		return resErr.Err
 	}
 
 	studId, err := strconv.Atoi(proj.StudentId)

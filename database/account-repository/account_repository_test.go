@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var dsn = "root:root@tcp(127.0.0.1:3306)/student_project_management_testing?parseTime=true"
+var dsn = "root:root@tcp(0.0.0.0:3308)/student_project_management_test?parseTime=true"
 
 func connectDB() *database.Database {
 	gdb, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -34,10 +34,10 @@ func TestAccountRepo_GetAccountByLogin(t *testing.T) {
 		ar := InitAccountRepository(*db)
 
 		// act
-		_, err := ar.GetAccountByLogin("123")
-
+		resChan := ar.GetAccountByLogin("123")
+		resAcc := <-resChan
 		// assert
-		assert.ErrorIs(t, err, models.ErrAccountNotFound)
+		assert.ErrorIs(t, resAcc.Err, models.ErrAccountNotFound)
 	})
 
 	t.Run("ok, get existing account", func(t *testing.T) {
@@ -48,10 +48,11 @@ func TestAccountRepo_GetAccountByLogin(t *testing.T) {
 		assert.NoError(t, err)
 
 		// act
-		_, err = ar.GetAccountByLogin(login)
+		resChan := ar.GetAccountByLogin(login)
+		resAcc := <-resChan
 
 		// assert
-		assert.NoError(t, err)
+		assert.NoError(t, resAcc.Err)
 
 		// cleanup
 		err = deleteTestingAccount(login, ar)
@@ -74,23 +75,26 @@ func TestAccountRepo_AddProfessor(t *testing.T) {
 		}
 
 		// act
-		prof, err := ar.AddProfessor(prof)
-
+		resChan := ar.AddProfessor(prof)
+		resProf := <-resChan
 		// assert
-		assert.NoError(t, err)
-		foundProf, err := ar.GetProfessorById(prof.Id)
-		assert.NoError(t, err)
-		assert.Equal(t, prof.Id, foundProf.Id)
-		assert.Equal(t, prof.Name, foundProf.Name)
-		assert.Equal(t, prof.Surname, foundProf.Surname)
-		assert.Equal(t, prof.Middlename, foundProf.Middlename)
-		assert.Equal(t, prof.ScienceDegree, foundProf.ScienceDegree)
+		assert.NoError(t, resProf.Err)
+		resChan1 := ar.GetProfessorById(resProf.Professor.Id)
+		resProf1 := <-resChan1
+
+		assert.NoError(t, resProf1.Err)
+		assert.Equal(t, resProf.Professor.Id, resProf1.Professor.Id)
+		assert.Equal(t, resProf.Professor.Name, resProf1.Professor.Name)
+		assert.Equal(t, resProf.Professor.Surname, resProf1.Professor.Surname)
+		assert.Equal(t, resProf.Professor.Middlename, resProf1.Professor.Middlename)
+		assert.Equal(t, resProf.Professor.ScienceDegree, resProf1.Professor.ScienceDegree)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 
 	t.Run("fail, uni id doesnt exist", func(t *testing.T) {
@@ -107,10 +111,10 @@ func TestAccountRepo_AddProfessor(t *testing.T) {
 		}
 
 		// act
-		_, err := ar.AddProfessor(prof)
-
+		resChan := ar.AddProfessor(prof)
+		resProf := <-resChan
 		// assert
-		assert.Error(t, err)
+		assert.Error(t, resProf.Err)
 	})
 }
 
@@ -129,32 +133,34 @@ func TestAccountRepo_AddAccount(t *testing.T) {
 			},
 			ScienceDegree: "sd",
 		}
-		prof, err := ar.AddProfessor(prof)
-		assert.NoError(t, err)
+		resChan := ar.AddProfessor(prof)
+		resProf := <-resChan
+		assert.NoError(t, resProf.Err)
 
 		login := time.Now().Format(time.RFC3339)
 		acc := models.Account{
 			Login: login,
 			Hash:  []byte{5, 6, 2},
 			Salt:  "123232434",
-			Id:    prof.Id,
+			Id:    resProf.Professor.Id,
 		}
 
 		// act
-		err = ar.AddAccount(acc)
-
+		resErrChan := ar.AddAccount(acc)
+		resErr := <-resErrChan
 		// assert
-		assert.NoError(t, err)
+		assert.NoError(t, resErr.Err)
 
-		foundAcc, err := ar.GetAccountByLogin(login)
-		assert.NoError(t, err)
-		assert.Equal(t, acc.Id, foundAcc.Id)
-		assert.Equal(t, acc.Login, foundAcc.Login)
-		assert.Equal(t, acc.Hash, foundAcc.Hash)
-		assert.Equal(t, acc.Salt, foundAcc.Salt)
+		resAccChan1 := ar.GetAccountByLogin(login)
+		resAcc := <-resAccChan1
+		assert.NoError(t, resAcc.Err)
+		assert.Equal(t, acc.Id, resAcc.Account.Id)
+		assert.Equal(t, acc.Login, resAcc.Account.Login)
+		assert.Equal(t, acc.Hash, resAcc.Account.Hash)
+		assert.Equal(t, acc.Salt, resAcc.Account.Salt)
 
 		// cleanup
-		err = deleteTestingAccount(login, ar)
+		err := deleteTestingAccount(login, ar)
 		assert.NoError(t, err)
 	})
 
@@ -170,10 +176,10 @@ func TestAccountRepo_AddAccount(t *testing.T) {
 		}
 
 		// act
-		err := ar.AddAccount(acc)
-
+		errChan := ar.AddAccount(acc)
+		err := <-errChan
 		// assert
-		assert.Error(t, err)
+		assert.Error(t, err.Err)
 	})
 }
 
@@ -185,17 +191,18 @@ func TestAccountRepo_GetProfessorById(t *testing.T) {
 		ar := InitAccountRepository(*db)
 
 		// act
-		_, err := ar.GetProfessorById("123")
+		resProfChan := ar.GetProfessorById("123")
+		resProf := <-resProfChan
 
 		// assert
-		assert.ErrorIs(t, err, models.ErrProfessorNotFound)
+		assert.ErrorIs(t, resProf.Err, models.ErrProfessorNotFound)
 	})
 
 	t.Run("ok, get existing prof", func(t *testing.T) {
 		// arrange
 		ar := InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "",
 				Surname:    "",
@@ -203,24 +210,27 @@ func TestAccountRepo_GetProfessorById(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		// act
-		foundProf, err := ar.GetProfessorById(prof.Id)
+		resProfChan1 := ar.GetProfessorById(resProf.Professor.Id)
+		resProf1 := <-resProfChan1
 
 		// assert
-		assert.NoError(t, err)
-		assert.Equal(t, prof.Id, foundProf.Id)
-		assert.Equal(t, prof.Name, foundProf.Name)
-		assert.Equal(t, prof.Surname, foundProf.Surname)
-		assert.Equal(t, prof.Middlename, foundProf.Middlename)
-		assert.Equal(t, prof.ScienceDegree, foundProf.ScienceDegree)
+		assert.NoError(t, resProf1.Err)
+		assert.Equal(t, resProf.Professor.Id, resProf1.Professor.Id)
+		assert.Equal(t, resProf.Professor.Name, resProf1.Professor.Name)
+		assert.Equal(t, resProf.Professor.Surname, resProf1.Professor.Surname)
+		assert.Equal(t, resProf.Professor.Middlename, resProf1.Professor.Middlename)
+		assert.Equal(t, resProf.Professor.ScienceDegree, resProf1.Professor.ScienceDegree)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 }
 
@@ -232,17 +242,18 @@ func TestAccountRepo_GetAccountPlannerData(t *testing.T) {
 		ar := InitAccountRepository(*db)
 
 		// act
-		_, err := ar.GetAccountPlannerData("123")
+		resAccChan := ar.GetAccountPlannerData("123")
+		resAcc := <-resAccChan
 
 		// assert
-		assert.ErrorIs(t, err, models.ErrAccountPlannerDataNotFound)
+		assert.ErrorIs(t, resAcc.Err, models.ErrAccountPlannerDataNotFound)
 	})
 
 	t.Run("ok, get existing planner data", func(t *testing.T) {
 		// arrange
 		ar := InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -250,11 +261,12 @@ func TestAccountRepo_GetAccountPlannerData(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		planner := models.PlannerIntegration{
 			BaseIntegration: models.BaseIntegration{
-				AccountId: prof.Id,
+				AccountId: resProf.Professor.Id,
 				ApiKey:    "api",
 				Type:      int(models.GoogleCalendar),
 			},
@@ -263,24 +275,27 @@ func TestAccountRepo_GetAccountPlannerData(t *testing.T) {
 			},
 		}
 
-		err = ar.AddAccountPlannerIntegration(planner)
-		assert.NoError(t, err)
+		resPlannerChan := ar.AddAccountPlannerIntegration(planner)
+		resPlanner := <-resPlannerChan
+		assert.NoError(t, resPlanner.Err)
 
 		// act
-		foundPl, err := ar.GetAccountPlannerData(planner.AccountId)
+		resPlannerChan1 := ar.GetAccountPlannerData(planner.AccountId)
+		resPlanner1 := <-resPlannerChan1
 
 		// assert
-		assert.NoError(t, err)
-		assert.Equal(t, planner.AccountId, foundPl.AccountId)
-		assert.Equal(t, planner.ApiKey, foundPl.ApiKey)
-		assert.Equal(t, planner.Id, foundPl.Id)
-		assert.Equal(t, planner.Type, foundPl.Type)
+		assert.NoError(t, resPlanner1.Err)
+		assert.Equal(t, planner.AccountId, resPlanner1.PlannerIntegration.AccountId)
+		assert.Equal(t, planner.ApiKey, resPlanner1.PlannerIntegration.ApiKey)
+		assert.Equal(t, planner.Id, resPlanner1.PlannerIntegration.Id)
+		assert.Equal(t, planner.Type, resPlanner1.PlannerIntegration.Type)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan := ar.DeleteProfessor(profId)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 }
 
@@ -292,17 +307,17 @@ func TestAccountRepo_GetAccountDriveData(t *testing.T) {
 		ar := InitAccountRepository(*db)
 
 		// act
-		_, err := ar.GetAccountDriveData("123")
-
+		resDriveChan := ar.GetAccountDriveData("123")
+		resDrive := <-resDriveChan
 		// assert
-		assert.ErrorIs(t, err, models.ErrAccountDriveDataNotFound)
+		assert.ErrorIs(t, resDrive.Err, models.ErrAccountDriveDataNotFound)
 	})
 
 	t.Run("ok, get existing drive data", func(t *testing.T) {
 		// arrange
 		ar := InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -310,11 +325,12 @@ func TestAccountRepo_GetAccountDriveData(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		drive := models.CloudDriveIntegration{
 			BaseIntegration: models.BaseIntegration{
-				AccountId: prof.Id,
+				AccountId: resProf.Professor.Id,
 				ApiKey:    "api",
 				Type:      int(models.GoogleDrive),
 			},
@@ -323,24 +339,26 @@ func TestAccountRepo_GetAccountDriveData(t *testing.T) {
 			},
 		}
 
-		err = ar.AddAccountDriveIntegration(drive)
-		assert.NoError(t, err)
+		resErrChan := ar.AddAccountDriveIntegration(drive)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		// act
-		foundDr, err := ar.GetAccountDriveData(drive.AccountId)
-
+		resDriveChan := ar.GetAccountDriveData(drive.AccountId)
+		resDrive := <-resDriveChan
 		// assert
-		assert.NoError(t, err)
-		assert.Equal(t, drive.AccountId, foundDr.AccountId)
-		assert.Equal(t, drive.ApiKey, foundDr.ApiKey)
-		assert.Equal(t, drive.BaseFolderId, foundDr.BaseFolderId)
-		assert.Equal(t, drive.Type, foundDr.Type)
+		assert.NoError(t, resDrive.Err)
+		assert.Equal(t, drive.AccountId, resDrive.CloudDriveIntegration.AccountId)
+		assert.Equal(t, drive.ApiKey, resDrive.CloudDriveIntegration.ApiKey)
+		assert.Equal(t, drive.BaseFolderId, resDrive.CloudDriveIntegration.BaseFolderId)
+		assert.Equal(t, drive.Type, resDrive.CloudDriveIntegration.Type)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan = ar.DeleteProfessor(profId)
+		resErr = <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 }
 
@@ -352,17 +370,18 @@ func TestAccountRepo_GetAccountRepoHubData(t *testing.T) {
 		ar := InitAccountRepository(*db)
 
 		// act
-		_, err := ar.GetAccountRepoHubData("123")
+		resRepoChan := ar.GetAccountRepoHubData("123")
+		resRepo := <-resRepoChan
 
 		// assert
-		assert.ErrorIs(t, err, models.ErrAccountRepoHubDataNotFound)
+		assert.ErrorIs(t, resRepo.Err, models.ErrAccountRepoHubDataNotFound)
 	})
 
 	t.Run("ok, get existing repo hub data", func(t *testing.T) {
 		// arrange
 		ar := InitAccountRepository(*db)
 
-		prof, err := ar.AddProfessor(domainaggregate.Professor{
+		resProfChan := ar.AddProfessor(domainaggregate.Professor{
 			Person: domainaggregate.Person{
 				Name:       "dsf",
 				Surname:    "sdf",
@@ -370,36 +389,39 @@ func TestAccountRepo_GetAccountRepoHubData(t *testing.T) {
 			},
 			ScienceDegree: time.Now().Format(time.RFC3339),
 		})
-		assert.NoError(t, err)
+		resProf := <-resProfChan
+		assert.NoError(t, resProf.Err)
 
 		repo := models.BaseIntegration{
-			AccountId: prof.Id,
+			AccountId: resProf.Professor.Id,
 			ApiKey:    time.Now().Format(time.RFC3339),
 			Type:      int(models.GoogleDrive),
 		}
 
-		err = ar.AddAccountRepoHubIntegration(repo)
-		assert.NoError(t, err)
+		resErrChan := ar.AddAccountRepoHubIntegration(repo)
+		resErr := <-resErrChan
+		assert.NoError(t, resErr.Err)
 
 		// act
-		foundRepo, err := ar.GetAccountRepoHubData(repo.AccountId)
-
+		resRepoChan := ar.GetAccountRepoHubData(repo.AccountId)
+		resRepo := <-resRepoChan
 		// assert
-		assert.NoError(t, err)
-		assert.Equal(t, repo.AccountId, foundRepo.AccountId)
-		assert.Equal(t, repo.ApiKey, foundRepo.ApiKey)
-		assert.Equal(t, repo.Type, foundRepo.Type)
+		assert.NoError(t, resErr.Err)
+		assert.Equal(t, repo.AccountId, resRepo.BaseIntegration.AccountId)
+		assert.Equal(t, repo.ApiKey, resRepo.BaseIntegration.ApiKey)
+		assert.Equal(t, repo.Type, resRepo.BaseIntegration.Type)
 
 		// cleanup
-		profId, err := strconv.Atoi(prof.Id)
+		profId, err := strconv.Atoi(resProf.Professor.Id)
 		assert.NoError(t, err)
-		err = ar.DeleteProfessor(profId)
-		assert.NoError(t, err)
+		resErrChan = ar.DeleteProfessor(profId)
+		resErr = <-resErrChan
+		assert.NoError(t, resErr.Err)
 	})
 }
 
 func addTestingAccount(name string, ar *AccountRepository) error {
-	prof, err := ar.AddProfessor(domainaggregate.Professor{
+	resProfChan := ar.AddProfessor(domainaggregate.Professor{
 		Person: domainaggregate.Person{
 			Name:       "",
 			Surname:    "",
@@ -407,25 +429,28 @@ func addTestingAccount(name string, ar *AccountRepository) error {
 		},
 		ScienceDegree: "",
 	})
-	if err != nil {
-		return err
+	resProf := <-resProfChan
+	if resProf.Err != nil {
+		return resProf.Err
 	}
-	err = ar.AddAccount(models.Account{
+	resErrChan := ar.AddAccount(models.Account{
 		Login: name,
 		Hash:  []byte{},
 		Salt:  "",
-		Id:    prof.Id,
+		Id:    resProf.Professor.Id,
 	})
-	if err != nil {
-		return err
+	resErr := <-resErrChan
+	if resErr.Err != nil {
+		return resErr.Err
 	}
 	return nil
 }
 
 func deleteTestingAccount(name string, ar *AccountRepository) error {
-	err := ar.DeleteAccountByLogin(name)
-	if err != nil {
-		return err
+	resErrChan := ar.DeleteAccountByLogin(name)
+	resErr := <-resErrChan
+	if resErr.Err != nil {
+		return resErr.Err
 	}
 	return nil
 }

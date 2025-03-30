@@ -1,0 +1,2 @@
+ALTER TABLE task
+ADD status INT NOT NULL DEFAULT 0;

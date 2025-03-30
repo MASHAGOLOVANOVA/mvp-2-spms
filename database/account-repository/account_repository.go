@@ -5,6 +5,7 @@ import (
 	"mvp-2-spms/database"
 	"mvp-2-spms/database/models"
 	entities "mvp-2-spms/domain-aggregate"
+	interfaces "mvp-2-spms/services/interfaces"
 	usecasemodels "mvp-2-spms/services/models"
 	"strconv"
 
@@ -21,134 +22,214 @@ func InitAccountRepository(dbcxt database.Database) *AccountRepository {
 	}
 }
 
-func (r *AccountRepository) GetAccountByLogin(login string) (usecasemodels.Account, error) {
-	acc := models.Account{}
+func (r *AccountRepository) GetAccountByLogin(login string) <-chan interfaces.ResultAccount {
+	resultChan := make(chan interfaces.ResultAccount)
 
-	result := r.dbContext.DB.Select("*").Where("login = ?", login).Take(&acc)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return usecasemodels.Account{}, usecasemodels.ErrAccountNotFound
+	go func() {
+		defer close(resultChan)
+		acc := models.Account{}
+
+		result := r.dbContext.DB.Select("*").Where("login = ?", login).Take(&acc)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultAccount{Account: usecasemodels.Account{}, Err: usecasemodels.ErrAccountNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultAccount{Account: usecasemodels.Account{}, Err: result.Error}
+			return
 		}
-		return usecasemodels.Account{}, result.Error
-	}
 
-	return acc.MapToUseCaseModel(), nil
+		resultChan <- interfaces.ResultAccount{Account: acc.MapToUseCaseModel(), Err: nil}
+	}()
+
+	return resultChan
 }
 
-func (r *AccountRepository) DeleteAccountByLogin(login string) error {
-	acc, err := r.GetAccountByLogin(login)
-	if err != nil {
-		return err
-	}
+func (r *AccountRepository) DeleteAccountByLogin(login string) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
 
-	profId, err := strconv.Atoi(acc.Id)
-	if err != nil {
-		return err
-	}
+	go func() {
+		defer close(resultChan)
 
-	result := r.dbContext.DB.Delete(&models.Professor{
-		Id: uint(profId),
-	})
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return usecasemodels.ErrProfessorNotFound
+		accResult := <-r.GetAccountByLogin(login)
+		if accResult.Err != nil {
+			resultChan <- interfaces.ResultError{Err: accResult.Err}
+			return
 		}
-		return result.Error
-	}
-	return nil
-}
 
-func (r *AccountRepository) AddProfessor(prof entities.Professor) (entities.Professor, error) {
-	dbProf := models.Professor{}
-	dbProf.MapEntityToThis(prof)
-
-	result := r.dbContext.DB.Create(&dbProf)
-	if result.Error != nil {
-		return entities.Professor{}, result.Error
-	}
-
-	return dbProf.MapToEntity(), nil
-}
-
-func (r *AccountRepository) DeleteProfessor(profId int) error {
-	dbProf := models.Professor{Id: uint(profId)}
-
-	result := r.dbContext.DB.Delete(&dbProf)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-
-func (r *AccountRepository) AddAccount(account usecasemodels.Account) error {
-	dbAcc := models.Account{}
-	dbAcc.MapUseCaseModelToThis(account)
-
-	result := r.dbContext.DB.Create(&dbAcc)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-
-func (r *AccountRepository) GetProfessorById(id string) (entities.Professor, error) {
-	prof := models.Professor{}
-
-	result := r.dbContext.DB.Select("*").Where("id = ?", id).Take(&prof)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return entities.Professor{}, usecasemodels.ErrProfessorNotFound
+		profId, err := strconv.Atoi(accResult.Account.Id)
+		if err != nil {
+			resultChan <- interfaces.ResultError{Err: err}
+			return
 		}
-		return entities.Professor{}, result.Error
-	}
 
-	return prof.MapToEntity(), nil
+		result := r.dbContext.DB.Delete(&models.Professor{Id: uint(profId)})
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultError{Err: usecasemodels.ErrProfessorNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
 }
 
-func (r *AccountRepository) GetAccountPlannerData(id string) (usecasemodels.PlannerIntegration, error) {
-	dbPlanner := models.PlannerIntegration{}
+func (r *AccountRepository) AddProfessor(prof entities.Professor) <-chan interfaces.ResultProfessor {
+	resultChan := make(chan interfaces.ResultProfessor)
 
-	result := r.dbContext.DB.Select("*").Where("account_id = ?", id).Take(&dbPlanner)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return usecasemodels.PlannerIntegration{}, usecasemodels.ErrAccountPlannerDataNotFound
+	go func() {
+		defer close(resultChan)
+
+		dbProf := models.Professor{}
+		dbProf.MapEntityToThis(prof)
+
+		result := r.dbContext.DB.Create(&dbProf)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultProfessor{Professor: entities.Professor{}, Err: result.Error}
+			return
 		}
-		return usecasemodels.PlannerIntegration{}, result.Error
-	}
 
-	return dbPlanner.MapToUseCaseModel(), nil
+		resultChan <- interfaces.ResultProfessor{Professor: dbProf.MapToEntity(), Err: nil}
+	}()
+
+	return resultChan
 }
 
-func (r *AccountRepository) GetAccountDriveData(id string) (usecasemodels.CloudDriveIntegration, error) {
-	dbDrive := models.DriveIntegration{}
+func (r *AccountRepository) DeleteProfessor(profId int) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
 
-	result := r.dbContext.DB.Select("*").Where("account_id = ?", id).Take(&dbDrive)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return usecasemodels.CloudDriveIntegration{}, usecasemodels.ErrAccountDriveDataNotFound
+	go func() {
+		defer close(resultChan)
+
+		dbProf := models.Professor{Id: uint(profId)}
+		result := r.dbContext.DB.Delete(&dbProf)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
 		}
-		return usecasemodels.CloudDriveIntegration{}, result.Error
-	}
 
-	return dbDrive.MapToUseCaseModel(), nil
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) AddAccount(account usecasemodels.Account) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
+
+	go func() {
+		defer close(resultChan)
+
+		dbAcc := models.Account{}
+		dbAcc.MapUseCaseModelToThis(account)
+
+		result := r.dbContext.DB.Create(&dbAcc)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) GetProfessorById(id string) <-chan interfaces.ResultProfessor {
+	resultChan := make(chan interfaces.ResultProfessor)
+
+	go func() {
+		defer close(resultChan)
+
+		prof := models.Professor{}
+		result := r.dbContext.DB.Select("*").Where("id = ?", id).Take(&prof)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultProfessor{Professor: entities.Professor{}, Err: usecasemodels.ErrProfessorNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultProfessor{Professor: entities.Professor{}, Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultProfessor{Professor: prof.MapToEntity(), Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) GetAccountPlannerData(id string) <-chan interfaces.ResultPlannerIntegration {
+	resultChan := make(chan interfaces.ResultPlannerIntegration)
+
+	go func() {
+		defer close(resultChan)
+
+		dbPlanner := models.PlannerIntegration{}
+		result := r.dbContext.DB.Select("*").Where("account_id = ?", id).Take(&dbPlanner)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultPlannerIntegration{PlannerIntegration: usecasemodels.PlannerIntegration{}, Err: usecasemodels.ErrAccountPlannerDataNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultPlannerIntegration{PlannerIntegration: usecasemodels.PlannerIntegration{}, Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultPlannerIntegration{PlannerIntegration: dbPlanner.MapToUseCaseModel(), Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) GetAccountDriveData(id string) <-chan interfaces.ResultCloudDriveIntegration {
+	resultChan := make(chan interfaces.ResultCloudDriveIntegration)
+
+	go func() {
+		defer close(resultChan)
+
+		dbDrive := models.DriveIntegration{}
+		result := r.dbContext.DB.Select("*").Where("account_id = ?", id).Take(&dbDrive)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultCloudDriveIntegration{CloudDriveIntegration: usecasemodels.CloudDriveIntegration{}, Err: usecasemodels.ErrAccountDriveDataNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultCloudDriveIntegration{CloudDriveIntegration: usecasemodels.CloudDriveIntegration{}, Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultCloudDriveIntegration{CloudDriveIntegration: dbDrive.MapToUseCaseModel(), Err: nil}
+	}()
+
+	return resultChan
 }
 
 // can return multiple for 1 account, should consider this
-func (r *AccountRepository) GetAccountRepoHubData(id string) (usecasemodels.BaseIntegration, error) {
-	dbRHub := models.GitRepositoryIntegration{}
+func (r *AccountRepository) GetAccountRepoHubData(id string) <-chan interfaces.ResultBaseIntegration {
+	resultChan := make(chan interfaces.ResultBaseIntegration)
 
-	result := r.dbContext.DB.Select("*").Where("account_id = ?", id).Take(&dbRHub)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return usecasemodels.BaseIntegration{}, usecasemodels.ErrAccountRepoHubDataNotFound
+	go func() {
+		defer close(resultChan)
+
+		dbRHub := models.GitRepositoryIntegration{}
+		result := r.dbContext.DB.Select("*").Where("account_id = ?", id).Take(&dbRHub)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultBaseIntegration{BaseIntegration: usecasemodels.BaseIntegration{}, Err: usecasemodels.ErrAccountRepoHubDataNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultBaseIntegration{BaseIntegration: usecasemodels.BaseIntegration{}, Err: result.Error}
+			return
 		}
-		return usecasemodels.BaseIntegration{}, result.Error
-	}
 
-	return dbRHub.MapToUseCaseModel(), nil
+		resultChan <- interfaces.ResultBaseIntegration{BaseIntegration: dbRHub.MapToUseCaseModel(), Err: nil}
+	}()
+
+	return resultChan
 }
 
 // func (r *AccountRepository) DeleteAccountPlannerData(id int) error {
@@ -184,75 +265,132 @@ func (r *AccountRepository) GetAccountRepoHubData(id string) (usecasemodels.Base
 // 	return nil
 // }
 
-func (r *AccountRepository) AddAccountPlannerIntegration(integr usecasemodels.PlannerIntegration) error {
-	dbPlanner := models.PlannerIntegration{}
-	dbPlanner.MapUseCaseModelToThis(integr)
+func (r *AccountRepository) AddAccountPlannerIntegration(integr usecasemodels.PlannerIntegration) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
 
-	result := r.dbContext.DB.Create(&dbPlanner)
-	if result.Error != nil {
-		return result.Error
-	}
+	go func() {
+		defer close(resultChan)
 
-	return nil
-}
-func (r *AccountRepository) AddAccountDriveIntegration(integr usecasemodels.CloudDriveIntegration) error {
-	dbDrive := models.DriveIntegration{}
-	dbDrive.MapUseCaseModelToThis(integr)
+		dbPlanner := models.PlannerIntegration{}
+		dbPlanner.MapUseCaseModelToThis(integr)
 
-	result := r.dbContext.DB.Create(&dbDrive)
-	if result.Error != nil {
-		return result.Error
-	}
+		result := r.dbContext.DB.Create(&dbPlanner)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
 
-	return nil
-}
-func (r *AccountRepository) AddAccountRepoHubIntegration(integr usecasemodels.BaseIntegration) error {
-	dbRepoHub := models.GitRepositoryIntegration{}
-	dbRepoHub.MapUseCaseModelToThis(integr)
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
 
-	result := r.dbContext.DB.Create(&dbRepoHub)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
+	return resultChan
 }
 
-func (r *AccountRepository) UpdateAccountPlannerIntegration(integr usecasemodels.PlannerIntegration) error {
-	plannerDb := models.PlannerIntegration{}
-	plannerDb.MapUseCaseModelToThis(integr)
+func (r *AccountRepository) AddAccountDriveIntegration(integr usecasemodels.CloudDriveIntegration) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
 
-	result := r.dbContext.DB.Where("account_id = ?", integr.AccountId).Save(&plannerDb)
-	if result.Error != nil {
-		return result.Error
-	}
+	go func() {
+		defer close(resultChan)
 
-	return nil
+		dbDrive := models.DriveIntegration{}
+		dbDrive.MapUseCaseModelToThis(integr)
+
+		result := r.dbContext.DB.Create(&dbDrive)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
 }
 
-func (r *AccountRepository) UpdateAccountDriveIntegration(integr usecasemodels.CloudDriveIntegration) error {
-	result := r.dbContext.DB.Model(&models.DriveIntegration{}).Where("account_id = ?", integr.AccountId).Update("api_key", integr.ApiKey)
-	if result.Error != nil {
-		return result.Error
-	}
+func (r *AccountRepository) AddAccountRepoHubIntegration(integr usecasemodels.BaseIntegration) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
 
-	if result.RowsAffected == 0 {
-		return usecasemodels.ErrAccountDriveDataNotFound
-	}
+	go func() {
+		defer close(resultChan)
 
-	return nil
+		dbRepoHub := models.GitRepositoryIntegration{}
+		dbRepoHub.MapUseCaseModelToThis(integr)
+
+		result := r.dbContext.DB.Create(&dbRepoHub)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
 }
 
-func (r *AccountRepository) UpdateAccountRepoHubIntegration(integr usecasemodels.BaseIntegration) error {
-	result := r.dbContext.DB.Model(&models.GitRepositoryIntegration{}).Where("account_id = ?", integr.AccountId).Update("api_key", integr.ApiKey)
+func (r *AccountRepository) UpdateAccountPlannerIntegration(integr usecasemodels.PlannerIntegration) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
 
-	if result.Error != nil {
-		return result.Error
-	}
+	go func() {
+		defer close(resultChan)
 
-	if result.RowsAffected == 0 {
-		return usecasemodels.ErrAccountDriveDataNotFound
-	}
+		plannerDb := models.PlannerIntegration{}
+		plannerDb.MapUseCaseModelToThis(integr)
 
-	return nil
+		result := r.dbContext.DB.Where("account_id = ?", integr.AccountId).Save(&plannerDb)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) UpdateAccountDriveIntegration(integr usecasemodels.CloudDriveIntegration) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
+
+	go func() {
+		defer close(resultChan)
+
+		result := r.dbContext.DB.Model(&models.DriveIntegration{}).Where("account_id = ?", integr.AccountId).Update("api_key", integr.ApiKey)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		if result.RowsAffected == 0 {
+			resultChan <- interfaces.ResultError{Err: usecasemodels.ErrAccountDriveDataNotFound}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) UpdateAccountRepoHubIntegration(integr usecasemodels.BaseIntegration) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
+
+	go func() {
+		defer close(resultChan)
+
+		result := r.dbContext.DB.Model(&models.GitRepositoryIntegration{}).Where("account_id = ?", integr.AccountId).Update("api_key", integr.ApiKey)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		if result.RowsAffected == 0 {
+			resultChan <- interfaces.ResultError{Err: usecasemodels.ErrAccountDriveDataNotFound}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
 }

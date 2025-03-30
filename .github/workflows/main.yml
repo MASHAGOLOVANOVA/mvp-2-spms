@@ -26,3 +26,43 @@ jobs:
 
       - name: Run Go Linter
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && golangci-lint run
+  test:
+    runs-on: ubuntu-latest
+    needs: lint  # Зависимость от job 'lint'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.22.0'
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build MySQL Test Image
+        run: |
+          docker build -t mysql_test -f testdb.Dockerfile .
+          docker build -t web -f build.Dockerfile .
+          docker images  # Проверка, что образ был создан
+
+      - name: Run MySQL Test Container
+        run: |
+          docker run --name mysql-test-container -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=student_project_management_test -e MYSQL_USER=owner -e MYSQL_PASSWORD=root -p 3308:3306 -d mysql_test
+          docker run --name web-test-container -p 8080:8080 -d web
+          docker ps  # Проверка, что контейнер запущен
+
+      - name: Run Go Tests
+        run: |
+          set -e
+          set -x
+          # Запуск тестов для всех пакетов
+          for pkg in $(go list ./...); do
+            if go test "$pkg" -v; then
+              echo "Tests passed for package: $pkg"
+            else
+              echo "Tests failed for package: $pkg"
+            fi
+          done

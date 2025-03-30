@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS cloud_folder (
+    id VARCHAR(100) NOT NULL, 
+    link VARCHAR(200) NOT NULL DEFAULT "",
+    PRIMARY KEY(id)
+);
+
+INSERT INTO cloud_folder (id)
+SELECT cloud_id
+FROM project
+WHERE cloud_id IS NOT NULL; 
+
+ALTER TABLE project 
+ADD CONSTRAINT FK_PrClf FOREIGN KEY (cloud_id) REFERENCES cloud_folder(id) ON DELETE CASCADE ON UPDATE CASCADE;

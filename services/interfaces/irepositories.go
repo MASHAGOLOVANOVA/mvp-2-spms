@@ -3,8 +3,38 @@ package interfaces
 import (
 	entities "mvp-2-spms/domain-aggregate"
 	"mvp-2-spms/services/models"
+	usecasemodels "mvp-2-spms/services/models"
 	"time"
 )
+
+type ResultAccount struct {
+	Account usecasemodels.Account
+	Err     error
+}
+
+type ResultProfessor struct {
+	Professor entities.Professor
+	Err       error
+}
+
+type ResultPlannerIntegration struct {
+	PlannerIntegration usecasemodels.PlannerIntegration
+	Err                error
+}
+
+type ResultCloudDriveIntegration struct {
+	CloudDriveIntegration usecasemodels.CloudDriveIntegration
+	Err                   error
+}
+
+type ResultBaseIntegration struct {
+	BaseIntegration usecasemodels.BaseIntegration
+	Err             error
+}
+
+type ResultError struct {
+	Err error
+}
 
 // transfers data in domain entities
 type IProjetRepository interface {
@@ -57,23 +87,23 @@ type IMeetingRepository interface {
 }
 
 type IAccountRepository interface {
-	GetProfessorById(id string) (entities.Professor, error)
-	AddProfessor(entities.Professor) (entities.Professor, error)
+	GetProfessorById(id string) <-chan ResultProfessor
+	AddProfessor(entities.Professor) <-chan ResultProfessor
 
-	GetAccountByLogin(login string) (models.Account, error)
-	AddAccount(models.Account) error
+	GetAccountByLogin(login string) <-chan ResultAccount
+	AddAccount(models.Account) <-chan ResultError
 
-	GetAccountPlannerData(id string) (models.PlannerIntegration, error)  // returns planner integration for later usage of api key???
-	GetAccountDriveData(id string) (models.CloudDriveIntegration, error) // returns drive integration for later usage of api key???
-	GetAccountRepoHubData(id string) (models.BaseIntegration, error)     // returns repo hub integration for later usage of api key???
+	GetAccountPlannerData(id string) <-chan ResultPlannerIntegration  // returns planner integration for later usage of api key???
+	GetAccountDriveData(id string) <-chan ResultCloudDriveIntegration // returns drive integration for later usage of api key???
+	GetAccountRepoHubData(id string) <-chan ResultBaseIntegration     // returns repo hub integration for later usage of api key???
 
-	AddAccountPlannerIntegration(models.PlannerIntegration) error
-	AddAccountDriveIntegration(models.CloudDriveIntegration) error
-	AddAccountRepoHubIntegration(models.BaseIntegration) error
+	AddAccountPlannerIntegration(models.PlannerIntegration) <-chan ResultError
+	AddAccountDriveIntegration(models.CloudDriveIntegration) <-chan ResultError
+	AddAccountRepoHubIntegration(models.BaseIntegration) <-chan ResultError
 
-	UpdateAccountPlannerIntegration(models.PlannerIntegration) error
-	UpdateAccountDriveIntegration(models.CloudDriveIntegration) error
-	UpdateAccountRepoHubIntegration(models.BaseIntegration) error
+	UpdateAccountPlannerIntegration(models.PlannerIntegration) <-chan ResultError
+	UpdateAccountDriveIntegration(models.CloudDriveIntegration) <-chan ResultError
+	UpdateAccountRepoHubIntegration(models.BaseIntegration) <-chan ResultError
 }
 
 type ITaskRepository interface {

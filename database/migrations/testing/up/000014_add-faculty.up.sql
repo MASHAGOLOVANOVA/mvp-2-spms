@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS faculty (
+    id INT NOT NULL auto_increment,
+    name VARCHAR(150) NOT NULL,
+    dept_id INT NOT NULL DEFAULT 1,
+    PRIMARY KEY(id),
+    FOREIGN KEY (dept_id) REFERENCES department(id) ON DELETE CASCADE ON UPDATE CASCADE
+);

@@ -12,3 +12,13 @@ run-commands-to-build-go: ## вызываются при запуске конт
 
 run-server: ## запуск сервера
 	./web_server/cmd/web_app/web_app
+
+
+run-commands-to-build-go-student: ## вызываются при запуске контейнера сборки приложения
+	go mod download
+	go build -o ./web_server/cmd/student-service/student-service ./web_server/cmd/student-service/
+
+run-commands-to-build-go-uni:
+	go mod download
+	go build -o ./web_server/cmd/university-service/university-service ./web_server/cmd/university-service/
+
