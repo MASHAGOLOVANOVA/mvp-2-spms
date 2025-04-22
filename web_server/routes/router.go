@@ -111,6 +111,7 @@ func (r *Router) setupStudentRoutes() {
 		r.Post("/add", studH.AddStudent)     // POST /students/add
 	})
 }
+
 func (r *Router) setupAccountRoutes() {
 	accH := handlers.InitAccountHandler(r.app.Intercators.AccountManager, r.app.Integrations.CloudDrives)
 
@@ -118,6 +119,7 @@ func (r *Router) setupAccountRoutes() {
 	r.router.With(handlers.Authentificator).Route("/api/v1/account", func(r chi.Router) {
 		r.Get("/", accH.GetAccountInfo)                     // GET /account/
 		r.Get("/integrations", accH.GetAccountIntegrations) // GET /account/integrations
+		r.Get("/student", accH.GetStudentAccountInfo)
 	})
 }
 
@@ -146,7 +148,9 @@ func (r *Router) setupAuthenRoutes() {
 	r.router.Route("/api/v1/auth", func(r chi.Router) {
 		r.With(handlers.BotAuthentificator).Route("/bot", func(r chi.Router) {
 			r.Post("/signinuser", authH.SignInBot)
+			r.Post("/signinstudent", authH.SignInStudent)
 			r.Post("/signupuser", authH.SignUp)
+			r.Post("/signupstudent", authH.StudentSignUp)
 		})
 		r.Route("/integration", func(r chi.Router) {
 			r.With(handlers.Authentificator).Get("/getplanners", calendarH.GetProfessorPlanners)

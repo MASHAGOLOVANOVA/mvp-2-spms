@@ -10,6 +10,16 @@ type SignUp struct {
 	UniId         int
 }
 
+type StudentSignUp struct {
+	Login      string
+	Name       string
+	Surname    string
+	Middlename string
+	EdProgName string
+	Course     uint
+	University string
+}
+
 type CheckCredsValidity struct {
 	Login    string
 	Password string
@@ -19,7 +29,15 @@ type CheckUsernameExists struct {
 	Login string
 }
 
+type CheckStudentExists struct {
+	Login string
+}
+
 type GetProfessorInfo struct {
+	AccountId uint
+}
+
+type GetStudentInfo struct {
 	AccountId uint
 }
 

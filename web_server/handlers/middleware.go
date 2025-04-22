@@ -58,23 +58,26 @@ func GetSessionUser(r *http.Request) (session.UserInfo, error) {
 }
 
 // ///////////////////////////////////////////////////////////////////////////??
-func GetCredentials(r *http.Request) (Credntials, error) {
+func GetCredentials(r *http.Request) (Credentials, error) {
 	session := r.Header.Get("Session-Id")
 	gcTok := r.Header.Get("Google-Calendar-Token")
 	gdTok := r.Header.Get("Google-Drive-Token")
 	ghTok := r.Header.Get("GitHub-Token")
+	ydTok := r.Header.Get("Yandex-Disk-Token")
 
-	return Credntials{
+	return Credentials{
 		Session:             session,
 		GoogleCalendarToken: gcTok,
 		GoogleDriveToken:    gdTok,
 		GitHubToken:         ghTok,
+		YandexDiskToken:     ydTok,
 	}, nil
 }
 
-type Credntials struct {
+type Credentials struct {
 	Session             string
 	GoogleCalendarToken string
 	GoogleDriveToken    string
 	GitHubToken         string
+	YandexDiskToken     string
 }

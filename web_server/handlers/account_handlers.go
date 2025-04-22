@@ -35,7 +35,7 @@ func (h *AccountHandler) GetAccountIntegrations(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -86,7 +86,7 @@ func (h *AccountHandler) GetAccountInfo(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -121,4 +121,51 @@ func (h *AccountHandler) GetAccountInfo(w http.ResponseWriter, r *http.Request) 
 	if err := json.NewEncoder(w).Encode(result); err != nil {
 		log.Printf("Ошибка при кодировании результата: %v", err)
 	}
+}
+
+func (h *AccountHandler) GetStudentAccountInfo(w http.ResponseWriter, r *http.Request) {
+	user, err := GetSessionUser(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	id, err := strconv.Atoi(user.GetAccId())
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+	input := inputdata.GetStudentInfo{
+		AccountId: uint(id),
+	}
+
+	result, err := h.accountInteractor.GetStudentInfo(input)
+	if err != nil {
+		if errors.Is(err, models.ErrProfessorNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+				log.Printf("Ошибка при кодировании ответа: %v", err)
+			}
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
+
 }

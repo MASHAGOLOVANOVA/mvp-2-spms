@@ -34,23 +34,26 @@ func InitSession(user UserInfo, exp time.Time) Session {
 }
 
 type UserInfo struct {
-	username    string
-	professorId string
+	username  string
+	accountId string
+	isProf    bool
 }
 
-func InitUserInfo(username string, profId string) UserInfo {
+func InitUserInfo(username string, profId string, isProf bool) UserInfo {
 	return UserInfo{
-		username:    username,
-		professorId: profId,
+		username:  username,
+		accountId: profId,
+		isProf:    isProf,
 	}
 }
 
 func (u UserInfo) GetUsername() string {
 	return u.username
 }
-func (u UserInfo) GetProfId() string {
-	return u.professorId
+func (u UserInfo) GetAccId() string {
+	return u.accountId
 }
+func (u UserInfo) IsProf() bool { return u.isProf }
 
 func SetBotTokenFromJson(filename string) {
 	f, err := os.Open(filename)

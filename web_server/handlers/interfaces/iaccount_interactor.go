@@ -16,10 +16,14 @@ type IAccountInteractor interface {
 	SetRepoHubIntegration(input inputdata.SetRepoHubIntegration, planner interfaces.IGitRepositoryHub) (outputdata.SetRepoHubIntegration, error)
 	GetAccountIntegrations(input inputdata.GetAccountIntegrations) (outputdata.GetAccountIntegrations, error)
 	GetProfessorInfo(input inputdata.GetProfessorInfo) (outputdata.GetProfessorInfo, error)
+	GetStudentInfo(input inputdata.GetStudentInfo) (outputdata.GetStudentInfo, error)
 	CheckCredsValidity(input inputdata.CheckCredsValidity) (bool, error)
 	CheckUsernameExists(input inputdata.CheckUsernameExists) (bool, error)
+	CheckStudentExists(input inputdata.CheckStudentExists) (bool, error)
 	SignUp(input inputdata.SignUp) (outputdata.SignUp, error)
+	StudentSignUp(input inputdata.StudentSignUp) (outputdata.SignUp, error)
 	GetAccountProfessorId(login string) (string, error)
+	GetAccountStudentId(login string) (string, error)
 	SetProfessorPlanner(plannerId, profId string) error
 	GetProfessorIntegrPlanners(profId string, planner interfaces.IPlannerService) (outputdata.GetProfessorIntegrPlanners, error)
 }

@@ -12,6 +12,11 @@ type ResultAccount struct {
 	Err     error
 }
 
+type ResultStudentAccount struct {
+	StudentAccount usecasemodels.StudentAccount
+	Err            error
+}
+
 type ResultProfessor struct {
 	Professor entities.Professor
 	Err       error
@@ -34,6 +39,14 @@ type ResultBaseIntegration struct {
 
 type ResultError struct {
 	Err error
+}
+
+type IProfessorRepository interface {
+	GetProfessors() ([]entities.Professor, error)
+	GetApplicationsByStudent(studentId string) ([]entities.Apply, error)
+	GetApplicationsByProfessor(profId string) ([]entities.Apply, error)
+	Apply(apply entities.Apply) error
+	UpdateApplication(apply entities.Apply) error
 }
 
 // transfers data in domain entities
@@ -91,7 +104,10 @@ type IAccountRepository interface {
 	AddProfessor(entities.Professor) <-chan ResultProfessor
 
 	GetAccountByLogin(login string) <-chan ResultAccount
+	GetStudentAccountByLogin(login string) <-chan ResultStudentAccount
+	GetStudentAccountByStudentId(id string) <-chan ResultStudentAccount
 	AddAccount(models.Account) <-chan ResultError
+	AddStudentAccount(account models.StudentAccount) <-chan ResultError
 
 	GetAccountPlannerData(id string) <-chan ResultPlannerIntegration  // returns planner integration for later usage of api key???
 	GetAccountDriveData(id string) <-chan ResultCloudDriveIntegration // returns drive integration for later usage of api key???

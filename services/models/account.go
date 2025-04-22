@@ -66,6 +66,14 @@ type Account struct {
 	Salt  string
 }
 
+type StudentAccount struct {
+	Id         string
+	Login      string
+	StudentId  string
+	EdProgName string
+	University string
+}
+
 type BaseIntegration struct {
 	AccountId string
 	ApiKey    string

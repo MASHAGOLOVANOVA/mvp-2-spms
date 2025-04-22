@@ -20,6 +20,16 @@ type SignUp struct {
 	UniversityId  int    `json:"university_id"`
 }
 
+type StudentSignUp struct {
+	Login      string `json:"login"`
+	Name       string `json:"name"`
+	Surname    string `json:"surname"`
+	Middlename string `json:"middlename"`
+	EdProgName string `json:"ed_prog_name"`
+	University string `json:"university"`
+	Course     uint   `json:"course"`
+}
+
 type SetProfessorPlanner struct {
 	Id string `json:"planner_id"`
 }
@@ -63,4 +73,9 @@ type AddTask struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Deadline    time.Time `json:"deadline"`
+}
+
+type Apply struct {
+	StudentId   *int `json:"student_id,omitempty"`
+	ProfessorId *int `json:"professor_id,omitempty"`
 }

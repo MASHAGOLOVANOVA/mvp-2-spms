@@ -22,12 +22,14 @@ const pbkdf2HashSize int = 32
 type AccountInteractor struct {
 	accountRepo interfaces.IAccountRepository
 	uniRepo     interfaces.IUniversityRepository
+	studentRepo interfaces.IStudentRepository
 }
 
-func InitAccountInteractor(accRepo interfaces.IAccountRepository, uniRepo interfaces.IUniversityRepository) *AccountInteractor {
+func InitAccountInteractor(accRepo interfaces.IAccountRepository, uniRepo interfaces.IUniversityRepository, studRepo interfaces.IStudentRepository) *AccountInteractor {
 	return &AccountInteractor{
 		accountRepo: accRepo,
 		uniRepo:     uniRepo,
+		studentRepo: studRepo,
 	}
 }
 
@@ -38,6 +40,15 @@ func (a *AccountInteractor) GetAccountProfessorId(login string) (string, error) 
 		return "", resAccount.Err
 	}
 	return resAccount.Account.Id, nil
+}
+
+func (a *AccountInteractor) GetAccountStudentId(login string) (string, error) {
+	resChan := a.accountRepo.GetStudentAccountByLogin(login)
+	resAccount := <-resChan
+	if resAccount.Err != nil {
+		return "", resAccount.Err
+	}
+	return resAccount.StudentAccount.Id, nil
 }
 
 func (a *AccountInteractor) GetProfessorInfo(input inputdata.GetProfessorInfo) (outputdata.GetProfessorInfo, error) {
@@ -61,6 +72,22 @@ func (a *AccountInteractor) GetProfessorInfo(input inputdata.GetProfessorInfo) (
 
 	// add get account login
 	output := outputdata.MapToGetAccountInfo(resProf.Professor, uni)
+	return output, nil
+}
+
+func (a *AccountInteractor) GetStudentInfo(input inputdata.GetStudentInfo) (outputdata.GetStudentInfo, error) {
+	student, err := a.studentRepo.GetStudentById(fmt.Sprint(input.AccountId))
+	if err != nil {
+		return outputdata.GetStudentInfo{}, err
+	}
+
+	resChan := a.accountRepo.GetStudentAccountByStudentId(student.Id)
+	resStud := <-resChan
+	if resStud.Err != nil {
+		return outputdata.GetStudentInfo{}, resStud.Err
+	}
+
+	output := outputdata.MapModelToGetStudentAccountInfo(student, resStud.StudentAccount)
 	return output, nil
 }
 
@@ -351,6 +378,18 @@ func (a *AccountInteractor) CheckUsernameExists(input inputdata.CheckUsernameExi
 	return true, nil
 }
 
+func (a *AccountInteractor) CheckStudentExists(input inputdata.CheckStudentExists) (bool, error) {
+	resChan := a.accountRepo.GetStudentAccountByLogin(input.Login)
+	resAccount := <-resChan
+	if resAccount.Err != nil {
+		if errors.Is(resAccount.Err, models.ErrAccountNotFound) {
+			return false, nil
+		}
+		return false, resAccount.Err
+	}
+	return true, nil
+}
+
 func (a *AccountInteractor) SignUp(input inputdata.SignUp) (outputdata.SignUp, error) {
 	salt := uuid.NewString()
 	passHash := pbkdf2.Key([]byte(input.Password), []byte(salt), pbkdf2Iterations, pbkdf2HashSize, sha512.New)
@@ -387,5 +426,41 @@ func (a *AccountInteractor) SignUp(input inputdata.SignUp) (outputdata.SignUp, e
 	return outputdata.SignUp{
 		Id:    account.Id,
 		Login: account.Login,
+	}, nil
+}
+
+func (a *AccountInteractor) StudentSignUp(input inputdata.StudentSignUp) (outputdata.SignUp, error) {
+	student := entities.Student{
+		Person: entities.Person{
+			Name:       input.Name,
+			Surname:    input.Surname,
+			Middlename: input.Middlename,
+		},
+		Cource:                 input.Course,
+		EducationalProgrammeId: "1",
+	}
+
+	student, err := a.studentRepo.CreateStudent(student)
+	if err != nil {
+		return outputdata.SignUp{}, err
+	}
+
+	studentAccount := models.StudentAccount{
+		Login:      input.Login,
+		StudentId:  student.Id,
+		Id:         student.Id,
+		EdProgName: input.EdProgName,
+		University: input.University,
+	}
+
+	resChan1 := a.accountRepo.AddStudentAccount(studentAccount)
+	resErr := <-resChan1
+	if resErr.Err != nil {
+		return outputdata.SignUp{}, resErr.Err
+	}
+
+	return outputdata.SignUp{
+		Id:    studentAccount.StudentId,
+		Login: studentAccount.Login,
 	}, nil
 }

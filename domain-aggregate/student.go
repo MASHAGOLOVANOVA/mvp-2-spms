@@ -6,3 +6,11 @@ type Student struct {
 	EducationalProgrammeId string
 	Cource                 uint
 }
+
+type StudentAccount struct {
+	Id         string
+	Login      string
+	StudentId  string
+	University string
+	EdProgName string
+}

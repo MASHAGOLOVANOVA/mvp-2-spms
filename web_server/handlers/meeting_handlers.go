@@ -44,7 +44,7 @@ func (h *MeetingHandler) AddMeeting(w http.ResponseWriter, r *http.Request) {
 
 	print("foundUser")
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -160,7 +160,7 @@ func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {

@@ -45,6 +45,49 @@ func (r *AccountRepository) GetAccountByLogin(login string) <-chan interfaces.Re
 	return resultChan
 }
 
+func (r *AccountRepository) GetStudentAccountByLogin(login string) <-chan interfaces.ResultStudentAccount {
+	resultChan := make(chan interfaces.ResultStudentAccount)
+	go func() {
+		defer close(resultChan)
+		acc := models.StudentAccount{}
+
+		result := r.dbContext.DB.Select("*").Where("login = ?", login).Take(&acc)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultStudentAccount{StudentAccount: usecasemodels.StudentAccount{}, Err: usecasemodels.ErrAccountNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultStudentAccount{StudentAccount: usecasemodels.StudentAccount{}, Err: result.Error}
+			return
+		}
+		resultChan <- interfaces.ResultStudentAccount{StudentAccount: acc.MapToUseCaseModel(), Err: nil}
+	}()
+
+	return resultChan
+
+}
+
+func (r *AccountRepository) GetStudentAccountByStudentId(id string) <-chan interfaces.ResultStudentAccount {
+	resultChan := make(chan interfaces.ResultStudentAccount)
+	go func() {
+		defer close(resultChan)
+		acc := models.StudentAccount{}
+
+		result := r.dbContext.DB.Select("*").Where("student_id = ?", id).Take(&acc)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				resultChan <- interfaces.ResultStudentAccount{StudentAccount: usecasemodels.StudentAccount{}, Err: usecasemodels.ErrAccountNotFound}
+				return
+			}
+			resultChan <- interfaces.ResultStudentAccount{StudentAccount: usecasemodels.StudentAccount{}, Err: result.Error}
+			return
+		}
+		resultChan <- interfaces.ResultStudentAccount{StudentAccount: usecasemodels.StudentAccount{}, Err: nil}
+	}()
+
+	return resultChan
+}
+
 func (r *AccountRepository) DeleteAccountByLogin(login string) <-chan interfaces.ResultError {
 	resultChan := make(chan interfaces.ResultError)
 
@@ -126,6 +169,27 @@ func (r *AccountRepository) AddAccount(account usecasemodels.Account) <-chan int
 
 		dbAcc := models.Account{}
 		dbAcc.MapUseCaseModelToThis(account)
+
+		result := r.dbContext.DB.Create(&dbAcc)
+		if result.Error != nil {
+			resultChan <- interfaces.ResultError{Err: result.Error}
+			return
+		}
+
+		resultChan <- interfaces.ResultError{Err: nil}
+	}()
+
+	return resultChan
+}
+
+func (r *AccountRepository) AddStudentAccount(account usecasemodels.StudentAccount) <-chan interfaces.ResultError {
+	resultChan := make(chan interfaces.ResultError)
+
+	go func() {
+		defer close(resultChan)
+
+		dbAcc := models.StudentAccount{}
+		dbAcc.MapModelToThis(account)
 
 		result := r.dbContext.DB.Create(&dbAcc)
 		if result.Error != nil {

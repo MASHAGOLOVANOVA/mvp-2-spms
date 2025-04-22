@@ -79,7 +79,74 @@ func (h *AuthHandler) SignInBot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := session.InitUserInfo(creds.Phone, profId)
+	user := session.InitUserInfo(creds.Phone, profId, true)
+	session.Sessions[sessionToken] = session.InitSession(user, expiresAt)
+
+	resBody := responsebodies.SessionToken{
+		Token:  sessionToken,
+		Expiry: expiresAt,
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
+}
+
+func (h *AuthHandler) SignInStudent(w http.ResponseWriter, r *http.Request) {
+	headerContentTtype := r.Header.Get("Content-Type")
+	// проверяем соответсвтвие типа содержимого запроса
+	if headerContentTtype != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
+	// декодируем тело запроса
+	var creds requestbodies.CredentialsBot
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	inp := inputdata.CheckStudentExists{
+		Login: creds.Phone,
+	}
+
+	found, err := h.accountInteractor.CheckStudentExists(inp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	if !found {
+		w.WriteHeader(http.StatusConflict)
+		if encodeErr := json.NewEncoder(w).Encode("account with phone is not found"); encodeErr != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", encodeErr)
+		}
+		return
+	}
+
+	// Create a new random session token
+	sessionToken := uuid.NewString() + "/" + creds.Phone
+	expiresAt := time.Now().Add(session.SessionDefaultExpTime)
+
+	profId, err := h.accountInteractor.GetAccountStudentId(creds.Phone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	user := session.InitUserInfo(creds.Phone, profId, false)
 	session.Sessions[sessionToken] = session.InitSession(user, expiresAt)
 
 	resBody := responsebodies.SessionToken{
@@ -159,7 +226,7 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := session.InitUserInfo(creds.Username, profId)
+	user := session.InitUserInfo(creds.Username, profId, true)
 	session.Sessions[sessionToken] = session.InitSession(user, expiresAt)
 
 	resBody := responsebodies.SessionToken{
@@ -237,7 +304,85 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	sessionToken := uuid.NewString() + "/" + creds.Username
 	expiresAt := time.Now().Add(session.SessionDefaultExpTime)
 
-	user := session.InitUserInfo(account.Login, account.Id)
+	user := session.InitUserInfo(account.Login, account.Id, true)
+	session.Sessions[sessionToken] = session.InitSession(user, expiresAt)
+
+	resBody := responsebodies.SessionToken{
+		Token:  sessionToken,
+		Expiry: expiresAt,
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		log.Printf("Ошибка при кодировании результата: %v", err)
+	}
+}
+
+func (h *AuthHandler) StudentSignUp(w http.ResponseWriter, r *http.Request) {
+	headerContentTtype := r.Header.Get("Content-Type")
+	// проверяем соответсвтвие типа содержимого запроса
+	if headerContentTtype != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
+
+	// декодируем тело запроса
+	var creds requestbodies.StudentSignUp
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(&creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	input := inputdata.CheckStudentExists{
+		Login: creds.Login,
+	}
+
+	usernameExists, err := h.accountInteractor.CheckStudentExists(input)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	if usernameExists {
+		w.WriteHeader(http.StatusConflict)
+		if err := json.NewEncoder(w).Encode("student username already exists"); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	signupInput := inputdata.StudentSignUp{
+		Login:      creds.Login,
+		Name:       creds.Name,
+		Surname:    creds.Surname,
+		Middlename: creds.Middlename,
+		University: creds.University,
+		EdProgName: creds.EdProgName,
+		Course:     creds.Course,
+	}
+
+	account, err := h.accountInteractor.StudentSignUp(signupInput)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	// Create a new random session token
+	sessionToken := uuid.NewString() + "/" + creds.Login
+	expiresAt := time.Now().Add(session.SessionDefaultExpTime)
+
+	user := session.InitUserInfo(account.Login, account.Id, false)
 	session.Sessions[sessionToken] = session.InitSession(user, expiresAt)
 
 	resBody := responsebodies.SessionToken{

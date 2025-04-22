@@ -38,7 +38,7 @@ func (h *PlannerIntegrationHandler) GetProfessorPlanners(w http.ResponseWriter, 
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -85,7 +85,7 @@ func (h *PlannerIntegrationHandler) SetProfessorPlanner(w http.ResponseWriter, r
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -133,7 +133,7 @@ func (h *PlannerIntegrationHandler) GetGoogleCalendarLink(w http.ResponseWriter,
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {

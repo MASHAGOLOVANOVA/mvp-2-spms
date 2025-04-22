@@ -43,7 +43,7 @@ func (h *TaskHandler) AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -136,7 +136,7 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -229,7 +229,7 @@ func (h *TaskHandler) GetAllProjectTasks(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	id, err := strconv.Atoi(user.GetProfId())
+	id, err := strconv.Atoi(user.GetAccId())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
