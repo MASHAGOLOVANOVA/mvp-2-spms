@@ -59,6 +59,30 @@ func (r *Router) SetupRoutes() {
 	r.setupUniversityRoutes()
 	r.setupAccountRoutes()
 	r.setupAuthenRoutes()
+	r.setupProfessorRoutes()
+	r.setupApplicationRoutes()
+}
+
+func (r *Router) setupApplicationRoutes() {
+	profH := handlers.InitProfessorHandler(r.app.Intercators.ProfessorManager)
+
+	r.router.With(handlers.Authentificator).Route("/api/v1/applications", func(r chi.Router) {
+		r.Get("/student", profH.GetStudentApplications)
+		r.Get("/professor", profH.GetProfessorApplications)
+		r.Put("/{applicationID}", profH.UpdateApplicationStatus)
+	})
+
+}
+
+func (r *Router) setupProfessorRoutes() {
+	profH := handlers.InitProfessorHandler(r.app.Intercators.ProfessorManager)
+
+	r.router.With(handlers.Authentificator).Route("/api/v1/professors", func(r chi.Router) {
+		r.Get("/", profH.GetProfessors)
+		r.Route("/{professorID}", func(r chi.Router) {
+			r.Post("/apply", profH.Apply)
+		})
+	})
 }
 
 func (r *Router) setupProjectRoutes() {
@@ -158,12 +182,14 @@ func (r *Router) setupAuthenRoutes() {
 			r.With(handlers.Authentificator).Route("/authlink", func(r chi.Router) {
 				r.Get("/googlecalendar", calendarH.GetGoogleCalendarLink) // GET /auth/integration/authlink/googlecalendar
 				r.Get("/googledrive", driveH.GetGoogleDriveLink)          // GET /auth/integration/authlink/googledrive
-				r.Get("/github", repoHubH.GetGitHubLink)                  // GET /auth/integration/authlink/github
+				r.Get("/yandexdisk", driveH.GetYandexDiskLink)
+				r.Get("/github", repoHubH.GetGitHubLink) // GET /auth/integration/authlink/github
 			})
 			r.Route("/access", func(r chi.Router) {
 				r.Get("/googlecalendar", calendarH.OAuthCallbackGoogleCalendar) // GET /auth/integration/access/googlecalendar
 				r.Get("/googledrive", driveH.OAuthCallbackGoogleDrive)          // GET /auth/integration/access/googledrive
-				r.Get("/github", repoHubH.OAuthCallbackGitHub)                  // GET /auth/integration/access/github
+				r.Get("/yandexdisk", driveH.OAuthCallbackYandexDisk)
+				r.Get("/github", repoHubH.OAuthCallbackGitHub) // GET /auth/integration/access/github
 			})
 		})
 		r.Post("/signin", authH.SignIn)                                                // POST /auth/signin

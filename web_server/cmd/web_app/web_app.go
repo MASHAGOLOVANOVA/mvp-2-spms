@@ -5,17 +5,21 @@ import (
 	"mvp-2-spms/database"
 	accountrepository "mvp-2-spms/database/account-repository"
 	meetingrepository "mvp-2-spms/database/meeting-repository"
+	professorrepository "mvp-2-spms/database/professor-repository"
 	projectrepository "mvp-2-spms/database/project-repository"
 	studentrepository "mvp-2-spms/database/student-repository"
 	taskrepository "mvp-2-spms/database/task-repository"
 	unirepository "mvp-2-spms/database/university-repository"
 	googleDrive "mvp-2-spms/integrations/cloud-drive/google-drive"
+	yandexdisc "mvp-2-spms/integrations/cloud-drive/yandex-disc"
 	"mvp-2-spms/integrations/git-repository-hub/github"
 	googleapi "mvp-2-spms/integrations/google-api"
 	googleCalendar "mvp-2-spms/integrations/planner-service/google-calendar"
+	yandexapi "mvp-2-spms/integrations/yandex-api"
 	"mvp-2-spms/internal"
 	manageaccounts "mvp-2-spms/services/manage-accounts"
 	managemeetings "mvp-2-spms/services/manage-meetings"
+	manageprofessors "mvp-2-spms/services/manage-professors"
 	manageprojects "mvp-2-spms/services/manage-projects"
 	managestudents "mvp-2-spms/services/manage-students"
 	managetasks "mvp-2-spms/services/manage-tasks"
@@ -73,6 +77,7 @@ func main() {
 		Meetings:     meetingrepository.InitMeetingRepository(*db),
 		Accounts:     accountrepository.InitAccountRepository(*db),
 		Tasks:        taskrepository.InitTaskRepository(*db),
+		Professors:   professorrepository.InitProfessorRepository(*db),
 	}
 
 	repoHub := github.InitGithub(github.InitGithubAPI())
@@ -83,14 +88,17 @@ func main() {
 	gCalendar := googleCalendar.InitGoogleCalendar(gCalendarApi)
 	gDriveApi := googleDrive.InitDriveApi(googleapi.InitGoogleAPI(drive.DriveScope))
 	gDrive := googleDrive.InitGoogleDrive(gDriveApi)
+	yandexAPI, err := yandexapi.InitYandexAPI()
+	yandexDisk := yandexdisc.NewYandexDisk(yandexAPI)
 
 	interactors := internal.Intercators{
-		AccountManager:   manageaccounts.InitAccountInteractor(repos.Accounts, repos.Universities),
+		AccountManager:   manageaccounts.InitAccountInteractor(repos.Accounts, repos.Universities, repos.Students),
 		ProjectManager:   manageprojects.InitProjectInteractor(repos.Projects, repos.Students, repos.Universities, repos.Accounts),
 		StudentManager:   managestudents.InitStudentInteractor(repos.Students, repos.Projects, repos.Universities),
 		MeetingManager:   managemeetings.InitMeetingInteractor(repos.Meetings, repos.Accounts, repos.Students, repos.Projects),
 		TaskManager:      managetasks.InitTaskInteractor(repos.Projects, repos.Tasks, repos.Accounts),
 		UnversityManager: manageuniversities.InitUniversityInteractor(repos.Universities),
+		ProfessorManager: manageprofessors.InitProfessorInteractor(repos.Professors, repos.Accounts, repos.Students),
 	}
 
 	integrations := internal.Integrations{
@@ -101,6 +109,7 @@ func main() {
 
 	integrations.Planners[models.GoogleCalendar] = gCalendar
 	integrations.CloudDrives[models.GoogleDrive] = gDrive
+	integrations.CloudDrives[models.YandexDisk] = yandexDisk
 	integrations.GitRepositoryHubs[models.GitHub] = repoHub
 
 	app := internal.StudentsProjectsManagementApp{

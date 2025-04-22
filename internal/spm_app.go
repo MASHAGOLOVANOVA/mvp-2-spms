@@ -22,6 +22,7 @@ type Intercators struct {
 	MeetingManager   hInterfaces.IMeetingInteractor
 	TaskManager      hInterfaces.ITaskInteractor
 	UnversityManager hInterfaces.IUniversityInteractor
+	ProfessorManager hInterfaces.IProfessorInteractor
 }
 
 type Integrations struct {
@@ -37,4 +38,5 @@ type Repositories struct {
 	Meetings     mngInterfaces.IMeetingRepository
 	Accounts     mngInterfaces.IAccountRepository
 	Tasks        mngInterfaces.ITaskRepository
+	Professors   mngInterfaces.IProfessorRepository
 }
