@@ -18,4 +18,4 @@ VALUES ("unknown", @last_id_in_dept);
 SET @last_id_in_faculty = LAST_INSERT_ID();
 
 INSERT INTO educational_programme (`name`, `ed_level`, `faculty_id`)
-VALUES ("Software Engineering", 1, @last_id_in_faculty), ("Business Informatics", 1, @last_id_in_faculty);
+VALUES ("Unknown", 1, @last_id_in_faculty), ("Software Engineering", 1, @last_id_in_faculty), ("Business Informatics", 1, @last_id_in_faculty);

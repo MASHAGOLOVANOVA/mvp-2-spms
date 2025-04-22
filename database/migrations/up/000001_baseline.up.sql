@@ -19,6 +19,28 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE TABLE IF NOT EXISTS
+    student_account(
+        id INT NOT NULL auto_increment,
+        login VARCHAR(50) NOT NULL,
+        student_id INT NOT NULL,
+        university VARCHAR(300),
+        ed_prog_name VARCHAR(150),
+        PRIMARY KEY (id),
+        FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+CREATE TABLE IF NOT EXISTS
+    application(
+        id INT NOT NULL auto_increment,
+        student_id INT NOT NULL,
+        professor_id INT NOT NULL,
+        status BOOLEAN DEFAULT NULL,
+        PRIMARY KEY (id),
+        FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (professor_id) REFERENCES professor(id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+CREATE TABLE IF NOT EXISTS
     project_status (
         id INT NOT NULL,
         name VARCHAR(50) NOT NULL,
