@@ -45,6 +45,7 @@ type IProfessorRepository interface {
 	GetProfessors() ([]entities.Professor, error)
 	GetApplicationsByStudent(studentId string) ([]entities.Apply, error)
 	GetApplicationsByProfessor(profId string) ([]entities.Apply, error)
+	GetApplicationsByProfessorAndStudent(profId string, studId string) ([]entities.Apply, error)
 	Apply(apply entities.Apply) error
 	UpdateApplication(apply entities.Apply) error
 }
@@ -94,9 +95,17 @@ type IUniversityRepository interface {
 // transfers data in domain entities
 type IMeetingRepository interface {
 	CreateMeeting(entities.Meeting) (entities.Meeting, error)
-	AssignPlannerMeeting(models.PlannerMeeting) error
+	AddSlot(slot entities.Slot, plannerId string) (entities.Slot, error)
+	ChooseSlot(slotId int, studId int) error
+	DeleteSlot(slotId int) error
+	GetSlotById(slotId int) (entities.Slot, error)
+	AssignPlannerMeeting(plannerMeeting models.PlannerMeeting) error
 	GetProfessorMeetings(profId string, from time.Time, to time.Time) ([]entities.Meeting, error)
+	GetProfessorSlots(profId string, filter string) ([]entities.Slot, error)
+	GetStudentMeetings(studId string) ([]entities.StudMeeting, error)
+	GetProfessorStudentMeetings(profId string) ([]entities.StudMeeting, error)
 	GetMeetingPlannerId(meetId string) (string, error)
+	GetMeetingById(meetId string) (entities.Meeting, error)
 }
 
 type IAccountRepository interface {

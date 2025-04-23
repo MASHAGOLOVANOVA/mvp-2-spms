@@ -91,16 +91,6 @@ func main() {
 	yandexAPI, err := yandexapi.InitYandexAPI()
 	yandexDisk := yandexdisc.NewYandexDisk(yandexAPI)
 
-	interactors := internal.Intercators{
-		AccountManager:   manageaccounts.InitAccountInteractor(repos.Accounts, repos.Universities, repos.Students),
-		ProjectManager:   manageprojects.InitProjectInteractor(repos.Projects, repos.Students, repos.Universities, repos.Accounts),
-		StudentManager:   managestudents.InitStudentInteractor(repos.Students, repos.Projects, repos.Universities),
-		MeetingManager:   managemeetings.InitMeetingInteractor(repos.Meetings, repos.Accounts, repos.Students, repos.Projects),
-		TaskManager:      managetasks.InitTaskInteractor(repos.Projects, repos.Tasks, repos.Accounts),
-		UnversityManager: manageuniversities.InitUniversityInteractor(repos.Universities),
-		ProfessorManager: manageprofessors.InitProfessorInteractor(repos.Professors, repos.Accounts, repos.Students),
-	}
-
 	integrations := internal.Integrations{
 		GitRepositoryHubs: make(internal.GitRepositoryHubs),
 		CloudDrives:       make(internal.CloudDrives),
@@ -111,6 +101,16 @@ func main() {
 	integrations.CloudDrives[models.GoogleDrive] = gDrive
 	integrations.CloudDrives[models.YandexDisk] = yandexDisk
 	integrations.GitRepositoryHubs[models.GitHub] = repoHub
+
+	interactors := internal.Intercators{
+		AccountManager:   manageaccounts.InitAccountInteractor(repos.Accounts, repos.Universities, repos.Students),
+		ProjectManager:   manageprojects.InitProjectInteractor(repos.Projects, repos.Students, repos.Universities, repos.Accounts),
+		StudentManager:   managestudents.InitStudentInteractor(repos.Students, repos.Projects, repos.Universities),
+		MeetingManager:   managemeetings.InitMeetingInteractor(repos.Meetings, repos.Accounts, repos.Students, repos.Projects, repos.Professors, integrations.Planners),
+		TaskManager:      managetasks.InitTaskInteractor(repos.Projects, repos.Tasks, repos.Accounts),
+		UnversityManager: manageuniversities.InitUniversityInteractor(repos.Universities),
+		ProfessorManager: manageprofessors.InitProfessorInteractor(repos.Professors, repos.Accounts, repos.Students),
+	}
 
 	app := internal.StudentsProjectsManagementApp{
 		Intercators:  interactors,

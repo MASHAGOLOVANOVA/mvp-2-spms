@@ -61,6 +61,7 @@ func (r *Router) SetupRoutes() {
 	r.setupAuthenRoutes()
 	r.setupProfessorRoutes()
 	r.setupApplicationRoutes()
+	r.setupSlotRoutes()
 }
 
 func (r *Router) setupApplicationRoutes() {
@@ -207,13 +208,34 @@ func (r *Router) setupMeetingRoutes() {
 		r.Get("/", meetH.GetProfessorMeetings)           // GET /meetings?from=2006-01-02T15:04:05.000Z
 		r.Get("/statuslist", meetH.GetMeetingStatusList) // GET /meetings/statuslist
 		r.Get("/filter", dummyHandler)                   // GET /meetings/filter?student_id=1&status=planned query params are accessed with r.URL.Query().Get("student_id")
-		r.Post("/add", meetH.AddMeeting)                 // POST /meetings/add
+		r.Post("/add", meetH.AddMeeting)
 		// Subrouters:
 		r.Route("/{meetingID}", func(r chi.Router) {
 			// r.Use(///) --> context (for handling not found errors for example)
 			r.Get("/", dummyHandler)    // GET /meetings/123
 			r.Put("/", dummyHandler)    // PUT /meetings/123
 			r.Delete("/", dummyHandler) // DELETE /meetings/123
+		})
+	})
+}
+
+func (r *Router) setupSlotRoutes() {
+	meetH := handlers.InitMeetingHandler(r.app.Intercators.MeetingManager, r.app.Intercators.AccountManager, r.app.Integrations.Planners)
+
+	r.router.With(handlers.Authentificator).Route("/api/v1/slots", func(r chi.Router) {
+		// POST /meetings/add
+		r.Post("/addslot", meetH.AddSlot)
+		r.Route("/{slotID}", func(r chi.Router) {
+			r.Post("/choose", meetH.ChooseSlot)
+			r.Delete("/del", meetH.DeleteSlot)
+			r.Put("/update", meetH.UpdateSlot)
+		})
+		r.Route("/student", func(r chi.Router) {
+			r.Get("/", meetH.GetStudentMeetings)
+		})
+		r.Route("/professor", func(r chi.Router) {
+			r.Get("/{professorID}", meetH.GetProfessorSlots)
+			r.Get("/student", meetH.GetProfessorStudentMeetings)
 		})
 	})
 }

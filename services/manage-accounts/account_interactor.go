@@ -175,9 +175,12 @@ func (a *AccountInteractor) GetDriveBaseFolderName(folderId, profId string, clou
 
 	folderName, err := cloudDrive.GetFolderNameById(folderId)
 	if err != nil {
-		return "", err
+		folder, err := cloudDrive.AddProfessorBaseFolder()
+		if err != nil {
+			return "", err
+		}
+		return folder.BaseFolderId, err
 	}
-
 	return folderName, nil
 }
 

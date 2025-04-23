@@ -3,8 +3,11 @@ package googlecalendar
 import (
 	"encoding/base64"
 	"fmt"
+	"google.golang.org/api/calendar/v3"
 	entities "mvp-2-spms/domain-aggregate"
+	"mvp-2-spms/services/manage-meetings/inputdata"
 	"mvp-2-spms/services/models"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +30,37 @@ func (c *GoogleCalendar) AddMeeting(meeting entities.Meeting, plannerInfo models
 
 	return models.PlannerMeeting{
 		Meeting:          meeting,
+		MeetingPlannerId: event.Id,
+	}, nil
+}
+
+func (c *GoogleCalendar) DeleteSlot(eventId string, plannerInfo models.PlannerIntegration) (models.PlannerSlot, error) {
+	_, err := c.api.DeleteSlot(eventId, plannerInfo.PlannerData.Id)
+	return models.PlannerSlot{}, err
+}
+
+func (c *GoogleCalendar) UpdateSlot(eventId string, slot inputdata.AddSlot, plannerInfo models.PlannerIntegration) error {
+	_, err := c.api.UpdateEvent(slot.MeetingTime, slot.Duration, plannerInfo.PlannerData.Id, eventId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *GoogleCalendar) AddSlot(slot inputdata.AddSlot, plannerInfo models.PlannerIntegration) (models.PlannerSlot, error) {
+	event, err := c.api.AddSlot(slot.MeetingTime, slot.Duration, slot.Description, plannerInfo.PlannerData.Id)
+	if err != nil {
+		return models.PlannerSlot{}, err
+	}
+	entity := entities.Slot{
+		Description: event.Description,
+		ProfessorId: strconv.Itoa(int(slot.ProfessorId)),
+		EventId:     event.Id,
+		IsOnline:    slot.IsOnline,
+	}
+
+	return models.PlannerSlot{
+		Slot:             entity,
 		MeetingPlannerId: event.Id,
 	}, nil
 }
@@ -62,13 +96,13 @@ func (c *GoogleCalendar) GetScheduleMeetingIds(from time.Time, plannerInfo model
 	return result, nil
 }
 
-func (c *GoogleCalendar) FindMeetingById(meetId string, plannerInfo models.PlannerIntegration) (bool, error) {
+func (c *GoogleCalendar) FindMeetingById(meetId string, plannerInfo models.PlannerIntegration) (*calendar.Event, error) {
 	event, err := c.api.GetEventById(meetId, plannerInfo.PlannerData.Id)
-	if err != nil {
-		return false, err
+	if err != nil || event.Id == "" {
+		return nil, err
 	}
 
-	return event.Id != "", nil
+	return event, nil
 }
 
 func (c *GoogleCalendar) GetAuthLink(redirectURI string, accountId int, returnURL string) (string, error) {

@@ -13,3 +13,8 @@ type PlannerMeeting struct {
 	entities.Meeting
 	MeetingPlannerId string
 }
+
+type PlannerSlot struct {
+	entities.Slot
+	MeetingPlannerId string
+}

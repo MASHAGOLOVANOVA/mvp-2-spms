@@ -46,6 +46,21 @@ func (r *ProfessorRepository) GetApplicationsByProfessor(profId string) ([]entit
 	return applications, nil
 }
 
+func (r *ProfessorRepository) GetApplicationsByProfessorAndStudent(profId string, studId string) ([]entities.Apply, error) {
+	var applyDb []models.Apply
+	result := r.dbContext.DB.Select("*").Where("professor_id = ? and student_id = ? and status = ?", profId, studId, true).Find(&applyDb)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	// Маппим профессоров из базы данных в сущности
+	applications := make([]entities.Apply, len(applyDb))
+	for i, ap := range applyDb {
+		applications[i] = ap.MapToEntity()
+	}
+	return applications, nil
+}
+
 // GetProfessors получает список профессоров из базы данных.
 func (r *ProfessorRepository) GetProfessors() ([]entities.Professor, error) {
 	var professorsDb []models.Professor

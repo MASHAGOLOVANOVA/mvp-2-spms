@@ -8,5 +8,12 @@ import (
 
 type IMeetingInteractor interface {
 	AddMeeting(input inputdata.AddMeeting, planner interfaces.IPlannerService) (outputdata.AddMeeting, error)
+	AddSlot(input inputdata.AddSlot, planner interfaces.IPlannerService) (outputdata.AddSlot, error)
+	UpdateSlot(slotId int, input inputdata.AddSlot, planner interfaces.IPlannerService) error
+	ChooseSlot(studId int, slotId int) error
+	DeleteSlot(profId int, slotId int, planner interfaces.IPlannerService) error
+	GetProfessorSlots(studId int, profId int, planner interfaces.IPlannerService, filter string) (outputdata.GetProfessorSlots, error)
+	GetStudentMeetings(studId int) (outputdata.GetStudentSlots, error)
+	GetProfessorStudentMeetings(profId int, planner interfaces.IPlannerService) (outputdata.GetStudentSlots, error)
 	GetProfessorMeetings(input inputdata.GetProfessorMeetings, planner interfaces.IPlannerService) (outputdata.GetProfesorMeetings, error)
 }

@@ -51,6 +51,13 @@ type AddMeeting struct {
 	IsOnline    bool      `json:"is_online"`
 }
 
+type AddSlot struct {
+	Description string    `json:"description"`
+	MeetingTime time.Time `json:"meeting_time"`
+	Duration    int       `json:"duration"`
+	IsOnline    bool      `json:"is_online"`
+}
+
 type AddProject struct {
 	Theme          string `json:"theme"`
 	StudentId      int    `json:"student_id"`

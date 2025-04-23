@@ -22,6 +22,14 @@ type AddMeeting struct {
 	IsOnline    bool
 }
 
+type AddSlot struct {
+	ProfessorId uint
+	Description string
+	MeetingTime time.Time
+	Duration    int
+	IsOnline    bool
+}
+
 func (am *AddMeeting) MapToMeetingEntity() entities.Meeting {
 	return entities.Meeting{
 		OrganizerId:   fmt.Sprint(am.ProfessorId),
@@ -32,5 +40,14 @@ func (am *AddMeeting) MapToMeetingEntity() entities.Meeting {
 		Time:          am.MeetingTime,
 		IsOnline:      am.IsOnline,
 		Status:        entities.MeetingStatus(entities.MeetingPlanned),
+	}
+}
+
+func (am *AddSlot) MapToSlotEntity() entities.Slot {
+	return entities.Slot{
+		ProfessorId: fmt.Sprint(am.ProfessorId),
+		Description: am.Description,
+		EventId:     "",
+		IsOnline:    am.IsOnline,
 	}
 }

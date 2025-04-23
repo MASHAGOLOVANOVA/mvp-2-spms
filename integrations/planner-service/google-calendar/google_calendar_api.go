@@ -62,6 +62,51 @@ func (c *googleCalendarApi) AddEvent(startTime time.Time, summary string, desc s
 	return nil, err
 }
 
+func (c *googleCalendarApi) DeleteSlot(eventId string, calendarId string) (*calendar.Event, error) {
+	err := c.api.Events.Delete(calendarId, eventId).Do()
+	return nil, err
+}
+
+func (c *googleCalendarApi) AddSlot(startTime time.Time, duration int, desc string, calendarId string) (*calendar.Event, error) {
+	endTime := strings.Split(startTime.Add(time.Duration(duration)*time.Minute).Format(time.RFC3339), "Z")[0]
+	event := &calendar.Event{
+		Summary:     "SPAMS Slot",
+		Description: desc,
+		Start: &calendar.EventDateTime{
+			TimeZone: "Etc/GMT-5",
+			DateTime: strings.Split(startTime.Format(time.RFC3339), "Z")[0],
+		},
+		End: &calendar.EventDateTime{
+			TimeZone: "Etc/GMT-5",
+			DateTime: endTime,
+		},
+		Recurrence: []string{"RRULE:FREQ=DAILY;COUNT=1"},
+	}
+	result, err := c.api.Events.Insert(calendarId, event).Do()
+	if err == nil {
+		return result, nil
+	}
+	return nil, err
+}
+
+func (c *googleCalendarApi) UpdateEvent(startTime time.Time, duration int, calendarId string, eventId string) (*calendar.Event, error) {
+	endTime := strings.Split(startTime.Add(time.Duration(duration)*time.Minute).Format(time.RFC3339), "Z")[0]
+	event, err := c.GetEventById(eventId, calendarId)
+	if err != nil {
+		log.Printf("event not found")
+	}
+	event.Start = &calendar.EventDateTime{
+		TimeZone: "Etc/GMT-5",
+		DateTime: strings.Split(startTime.Format(time.RFC3339), "Z")[0],
+	}
+	event.End = &calendar.EventDateTime{
+		TimeZone: "Etc/GMT-5",
+		DateTime: endTime,
+	}
+	_, err = c.api.Events.Update(calendarId, eventId, event).Do()
+	return nil, err
+}
+
 func (c *googleCalendarApi) GetEventById(eventId string, calendarId string) (*calendar.Event, error) {
 	event, err := c.api.Events.Get(calendarId, eventId).Do()
 	if err == nil {
