@@ -20,9 +20,9 @@ func (*Apply) TableName() string {
 func (a *Apply) MapToEntity() entities.Apply {
 	var statusStr string
 	if a.Status != nil {
-		statusStr = strconv.FormatBool(*a.Status) // Преобразуем указатель в строку
+		statusStr = strconv.FormatBool(*a.Status)
 	} else {
-		statusStr = "null" // Или любое другое значение, которое вы хотите использовать для обозначения отсутствия статуса
+		statusStr = "null"
 	}
 
 	return entities.Apply{

@@ -422,6 +422,64 @@ func (h *MeetingHandler) ChooseSlot(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (h *MeetingHandler) AddSlotProject(w http.ResponseWriter, r *http.Request) {
+	user, err := GetSessionUser(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	_, err = strconv.Atoi(user.GetAccId())
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	headerContentTtype := r.Header.Get("Content-Type")
+	// проверяем соответсвтвие типа содержимого запроса
+	if headerContentTtype != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var reqB struct {
+		ProjectId int `json:"project_id"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&reqB)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	slotId, err := strconv.Atoi(chi.URLParam(r, "slotID"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
+			log.Printf("Ошибка при кодировании ответа: %v", err)
+		}
+		return
+	}
+
+	err = h.meetingInteractor.BindSlotToProject(slotId, reqB.ProjectId)
+	if err != nil {
+		return
+	}
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *MeetingHandler) UpdateSlot(w http.ResponseWriter, r *http.Request) {
 	user, err := GetSessionUser(r)
 	if err != nil {

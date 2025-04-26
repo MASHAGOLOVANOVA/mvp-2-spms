@@ -98,6 +98,15 @@ func (m *MeetingInteractor) GetProfessorStudentMeetings(profId int, planner inte
 
 			student, err := m.studentRepo.GetStudentById(slot.StudentId)
 			professor := <-m.accountRepo.GetProfessorById(slotEntity.ProfessorId)
+			projMeeting, err := m.meetingRepo.GetProjectMeetingByStudMeetingId(slot.Id)
+			if err != nil {
+				return outputdata.GetStudentSlots{}, err
+			}
+			project := domainaggregate.Project{}
+			if projMeeting.Id != "" {
+
+				project, err = m.projectRepo.GetProjectById(projMeeting.ProjectId)
+			}
 
 			slotsEntities := outputdata.GetStudentSlotsEntities{
 				StudMeeting:   slot,
@@ -107,16 +116,12 @@ func (m *MeetingInteractor) GetProfessorStudentMeetings(profId int, planner inte
 				EndTime:       endTime,
 				StudentName:   student.FullNameToString(),
 				ProfessorName: professor.Professor.FullNameToString(),
+				Project:       project,
 			}
 			entities = append(entities, slotsEntities)
 		}
 	}
-	if err != nil {
-		return outputdata.GetStudentSlots{}, err
-	}
-
 	return outputdata.MapToGetStudentSlots(entities), nil
-
 }
 
 func (m *MeetingInteractor) GetStudentMeetings(studId int) (outputdata.GetStudentSlots, error) {
@@ -343,6 +348,14 @@ func (m *MeetingInteractor) ChooseSlot(studId int, slotId int) error {
 	}
 
 	err = m.meetingRepo.ChooseSlot(slotId, studId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MeetingInteractor) BindSlotToProject(slotId int, projectId int) error {
+	err := m.meetingRepo.BindSlotToProject(slotId, projectId)
 	if err != nil {
 		return err
 	}

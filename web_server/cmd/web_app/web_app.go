@@ -82,8 +82,6 @@ func main() {
 
 	repoHub := github.InitGithub(github.InitGithubAPI())
 
-	// scopes := []string{calendar.CalendarScope, drive.DriveScope}
-
 	gCalendarApi := googleCalendar.InitCalendarApi(googleapi.InitGoogleAPI(calendar.CalendarScope))
 	gCalendar := googleCalendar.InitGoogleCalendar(gCalendarApi)
 	gDriveApi := googleDrive.InitDriveApi(googleapi.InitGoogleAPI(drive.DriveScope))
@@ -109,7 +107,7 @@ func main() {
 		MeetingManager:   managemeetings.InitMeetingInteractor(repos.Meetings, repos.Accounts, repos.Students, repos.Projects, repos.Professors, integrations.Planners),
 		TaskManager:      managetasks.InitTaskInteractor(repos.Projects, repos.Tasks, repos.Accounts),
 		UnversityManager: manageuniversities.InitUniversityInteractor(repos.Universities),
-		ProfessorManager: manageprofessors.InitProfessorInteractor(repos.Professors, repos.Accounts, repos.Students),
+		ProfessorManager: manageprofessors.InitApplicationInteractor(repos.Professors, repos.Accounts, repos.Students),
 	}
 
 	app := internal.StudentsProjectsManagementApp{

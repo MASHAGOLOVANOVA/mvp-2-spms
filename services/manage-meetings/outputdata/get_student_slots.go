@@ -16,6 +16,7 @@ func MapToGetStudentSlots(meetings []GetStudentSlotsEntities) GetStudentSlots {
 		parseInt, _ := strconv.Atoi(meet.Slot.Id)
 		profId, _ := strconv.Atoi(meet.Slot.ProfessorId)
 		studId, _ := strconv.Atoi(meet.StudMeeting.StudentId)
+		projId, _ := strconv.Atoi(meet.Project.Id)
 		outputProjects = append(outputProjects,
 			GetStudSlotsData{
 				Id:            parseInt,
@@ -27,6 +28,8 @@ func MapToGetStudentSlots(meetings []GetStudentSlotsEntities) GetStudentSlots {
 				ProfessorName: meet.ProfessorName,
 				StudentName:   meet.StudentName,
 				IsOnline:      meet.Slot.IsOnline,
+				ProjectId:     projId,
+				ProjectTheme:  meet.Project.Theme,
 			})
 	}
 	return GetStudentSlots{
@@ -43,6 +46,7 @@ type GetStudentSlotsEntities struct {
 	ProfessorName string
 	StudentName   string
 	IsOnline      bool
+	Project       entities.Project
 }
 
 type GetStudSlotsData struct {
@@ -55,4 +59,6 @@ type GetStudSlotsData struct {
 	ProfessorName string    `json:"professor_name"`
 	StudentName   string    `json:"student_name"`
 	IsOnline      bool      `json:"is_online"`
+	ProjectId     int       `json:"project_id"`
+	ProjectTheme  string    `json:"project_theme"`
 }

@@ -229,6 +229,7 @@ func (r *Router) setupSlotRoutes() {
 			r.Post("/choose", meetH.ChooseSlot)
 			r.Delete("/del", meetH.DeleteSlot)
 			r.Put("/update", meetH.UpdateSlot)
+			r.Post("/addproject", meetH.AddSlotProject)
 		})
 		r.Route("/student", func(r chi.Router) {
 			r.Get("/", meetH.GetStudentMeetings)

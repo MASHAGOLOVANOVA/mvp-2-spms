@@ -97,6 +97,7 @@ type IMeetingRepository interface {
 	CreateMeeting(entities.Meeting) (entities.Meeting, error)
 	AddSlot(slot entities.Slot, plannerId string) (entities.Slot, error)
 	ChooseSlot(slotId int, studId int) error
+	BindSlotToProject(slotId int, projectId int) error
 	DeleteSlot(slotId int) error
 	GetSlotById(slotId int) (entities.Slot, error)
 	AssignPlannerMeeting(plannerMeeting models.PlannerMeeting) error
@@ -104,6 +105,7 @@ type IMeetingRepository interface {
 	GetProfessorSlots(profId string, filter string) ([]entities.Slot, error)
 	GetStudentMeetings(studId string) ([]entities.StudMeeting, error)
 	GetProfessorStudentMeetings(profId string) ([]entities.StudMeeting, error)
+	GetProjectMeetingByStudMeetingId(studMeetingId string) (entities.ProjectMeeting, error)
 	GetMeetingPlannerId(meetId string) (string, error)
 	GetMeetingById(meetId string) (entities.Meeting, error)
 }

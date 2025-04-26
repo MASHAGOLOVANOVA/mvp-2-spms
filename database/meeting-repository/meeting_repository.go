@@ -21,6 +21,17 @@ func InitMeetingRepository(dbcxt database.Database) *MeetingRepository {
 	}
 }
 
+func (r *MeetingRepository) GetProjectMeetingByStudMeetingId(studMeetingId string) (entities.ProjectMeeting, error) {
+
+	var meetingDb models.ProjectMeeting
+	tx := r.dbContext.DB.Select("*").Where(" stud_meeting_id = ?", studMeetingId).Take(&meetingDb)
+
+	if tx.Error != nil {
+		return entities.ProjectMeeting{}, nil
+	}
+	return meetingDb.MapToEntity(), nil
+}
+
 func (r *MeetingRepository) GetProfessorStudentMeetings(profId string) ([]entities.StudMeeting, error) {
 	slots, _ := r.GetProfessorSlots(profId, "")
 	meetings := []entities.StudMeeting{}
@@ -95,6 +106,17 @@ func (r *MeetingRepository) ChooseSlot(slotId int, studId int) error {
 	dbStudMeeting := models.StudMeeting{}
 	dbStudMeeting.MapToThis(slotId, studId)
 	result := r.dbContext.DB.Create(&dbStudMeeting)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *MeetingRepository) BindSlotToProject(slotId int, projectId int) error {
+	dbProjectMeeting := models.ProjectMeeting{}
+	dbProjectMeeting.MapToThis(slotId, projectId)
+	result := r.dbContext.DB.Create(&dbProjectMeeting)
 
 	if result.Error != nil {
 		return result.Error
