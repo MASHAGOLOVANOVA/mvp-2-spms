@@ -1,2 +1,2 @@
-ALTER TABLE user_account 
+ALTER TABLE professor_account
 MODIFY COLUMN hash BLOB NOT NULL;

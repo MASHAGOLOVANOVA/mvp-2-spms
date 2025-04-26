@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS user_account(
+CREATE TABLE IF NOT EXISTS professor_account(
     professor_id INT NOT NULL,
     login VARCHAR(100) NOT NULL,
     hash VARCHAR(200) NOT NULL,

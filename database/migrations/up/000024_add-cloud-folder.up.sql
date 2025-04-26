@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS cloud_folder (
     id VARCHAR(100) NOT NULL, 
-    link VARCHAR(200) NOT NULL DEFAULT "",
+    link VARCHAR(10000) NOT NULL DEFAULT "",
     PRIMARY KEY(id)
 );
 

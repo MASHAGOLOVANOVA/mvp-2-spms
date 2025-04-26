@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS
         name VARCHAR(50) NOT NULL,
         surname VARCHAR(50) NOT NULL,
         middlename VARCHAR(50) NOT NULL,
-        science_degree VARCHAR(100) NOT NULL,
         PRIMARY KEY(id)
     );
 
@@ -15,6 +14,8 @@ CREATE TABLE IF NOT EXISTS
         surname VARCHAR(50) NOT NULL,
         middlename VARCHAR(50) NOT NULL,
         enrollment_year INT UNSIGNED NOT NULL,
+        univerity VARCHAR(250),
+        ed_program VARCHAR(250),
         PRIMARY KEY(id)
     );
 
@@ -23,8 +24,6 @@ CREATE TABLE IF NOT EXISTS
         id INT NOT NULL auto_increment,
         login VARCHAR(50) NOT NULL,
         student_id INT NOT NULL,
-        university VARCHAR(300),
-        ed_prog_name VARCHAR(150),
         PRIMARY KEY (id),
         FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE ON UPDATE CASCADE
     );
@@ -44,14 +43,6 @@ CREATE TABLE IF NOT EXISTS
     project_status (
         id INT NOT NULL,
         name VARCHAR(50) NOT NULL,
-        PRIMARY KEY(id)
-    );
-
-CREATE TABLE IF NOT EXISTS
-    repository (
-        id INT NOT NULL auto_increment,
-        name VARCHAR(100) NOT NULL,
-        is_public BOOLEAN NOT NULL,
         PRIMARY KEY(id)
     );
 
@@ -84,21 +75,37 @@ CREATE TABLE IF NOT EXISTS
         theme VARCHAR(100) NOT NULL,
         year INT NOT NULL,
         supervisor_id INT NOT NULL,
-        student_id INT NOT NULL,
         status_id INT NOT NULL,
         stage_id INT NOT NULL,
-        repo_id INT,
         grade FLOAT,
         supervisor_review_id INT,
         PRIMARY KEY(id),
         FOREIGN KEY (supervisor_id) REFERENCES professor(id)ON DELETE CASCADE ON UPDATE CASCADE,
-        FOREIGN KEY (student_id) REFERENCES student(id)ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY (status_id) REFERENCES project_status(id)ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY (stage_id) REFERENCES project_stage(id)ON DELETE CASCADE ON UPDATE CASCADE,
-        FOREIGN KEY (supervisor_review_id) REFERENCES supervisor_review(id)ON DELETE CASCADE ON UPDATE CASCADE,
-        FOREIGN KEY (repo_id) REFERENCES repository(id)ON DELETE CASCADE ON UPDATE CASCADE
+        FOREIGN KEY (supervisor_review_id) REFERENCES supervisor_review(id)ON DELETE CASCADE ON UPDATE CASCADE
     );
 
+CREATE TABLE IF NOT EXISTS
+    repository (
+                   id INT NOT NULL auto_increment,
+                   name VARCHAR(1000) NOT NULL,
+    is_public BOOLEAN NOT NULL,
+    project_id INT NOT NULL,
+    PRIMARY KEY(id),
+    FOREIGN KEY (project_id) REFERENCES project(id)ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+
+create table if not exists
+    project_participation(
+        id INT NOT NULL auto_increment,
+        student_id INT NOT NULL,
+        project_id INT NOT NULL,
+        PRIMARY KEY(id),
+        FOREIGN KEY (project_id) REFERENCES project(id)ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES student(id)ON DELETE CASCADE ON UPDATE CASCADE
+);
 
 
 CREATE TABLE IF NOT EXISTS
