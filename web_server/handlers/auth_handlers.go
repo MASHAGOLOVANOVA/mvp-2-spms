@@ -282,13 +282,11 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	signupInput := inputdata.SignUp{
-		Login:         creds.Username,
-		Password:      creds.Password,
-		Name:          creds.Name,
-		Surname:       creds.Surname,
-		Middlename:    creds.Middlename,
-		UniId:         creds.UniversityId,
-		ScienceDegree: creds.ScienceDegree,
+		Login:      creds.Username,
+		Password:   creds.Password,
+		Name:       creds.Name,
+		Surname:    creds.Surname,
+		Middlename: creds.Middlename,
 	}
 
 	account, err := h.accountInteractor.SignUp(signupInput)

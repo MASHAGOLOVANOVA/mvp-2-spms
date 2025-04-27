@@ -11,6 +11,7 @@ type Repository struct {
 	Commits   []Commit
 	Branches  []branch
 	RepoType  int
+	ProjectId int
 }
 
 type branch struct {

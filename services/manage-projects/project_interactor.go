@@ -35,7 +35,7 @@ func InitProjectInteractor(projRepo interfaces.IProjetRepository, stRepo interfa
 // returns all professor projects (basic information)
 func (p *ProjectInteractor) GetProfessorProjects(input inputdata.GetProfessorProjects) (outputdata.GetProfessorProjects, error) {
 	// get from database
-	projEntities := []outputdata.GetProfessorProjectsEntities{}
+	var projEntities []outputdata.GetProfessorProjectsEntities
 
 	var projects []domainaggregate.Project
 	var err error
@@ -51,14 +51,18 @@ func (p *ProjectInteractor) GetProfessorProjects(input inputdata.GetProfessorPro
 	}
 
 	for _, project := range projects {
-		student, err := p.studentRepo.GetStudentById(project.StudentId)
-		if err != nil {
-			return outputdata.GetProfessorProjects{}, err
+		var students []domainaggregate.Student
+		for _, id := range project.StudentIds {
+			byId, err := p.studentRepo.GetStudentById(id)
+			if err != nil {
+				return outputdata.GetProfessorProjects{}, err
+			}
+			students = append(students, byId)
 		}
 
 		projEntities = append(projEntities, outputdata.GetProfessorProjectsEntities{
-			Project: project,
-			Student: student,
+			Project:  project,
+			Students: students,
 		})
 	}
 	output := outputdata.MapToGetProfessorProjects(projEntities)
@@ -127,17 +131,16 @@ func (p *ProjectInteractor) GetProjectById(input inputdata.GetProjectById) (outp
 	}
 
 	// getting student info
-	student, err := p.studentRepo.GetStudentById(project.StudentId)
-	if err != nil {
-		return outputdata.GetProjectById{}, err
+	students := []domainaggregate.Student{}
+	for _, id := range project.StudentIds {
+		student, err := p.studentRepo.GetStudentById(id)
+		if err != nil {
+			return outputdata.GetProjectById{}, err
+		}
+		students = append(students, student)
 	}
 
-	edProg, err := p.uniRepo.GetEducationalProgrammeById(student.EducationalProgrammeId)
-	if err != nil {
-		return outputdata.GetProjectById{}, err
-	}
-
-	output := outputdata.MapToGetProjectsById(project, student, edProg, cloudFolder)
+	output := outputdata.MapToGetProjectsById(project, students, cloudFolder)
 	return output, nil
 }
 
@@ -167,12 +170,15 @@ func (p *ProjectInteractor) GetProjectSupReport(input inputdata.GetProjectSupRep
 	}
 	report.SupRewGrade = fmt.Sprint(projectGrading.SupervisorReview.GetGrade())
 
-	student, err := p.studentRepo.GetStudentById(project.StudentId)
-	if err != nil {
-		return "", err
+	for _, studId := range project.StudentIds {
+		student, err := p.studentRepo.GetStudentById(studId)
+		if err != nil {
+			return "", err
+		}
+		report.StudentNames = append(report.StudentNames, student.FullNameToString())
+		report.Courses = append(report.Courses, fmt.Sprint(student.Course))
+		report.EdProgrammes = append(report.EdProgrammes, student.EducationalProgramme)
 	}
-	report.StudentName = student.FullNameToString()
-	report.Course = fmt.Sprint(student.Cource)
 
 	resChan := p.accountRepo.GetProfessorById(fmt.Sprint(input.ProfessorId))
 	resProf := <-resChan
@@ -180,15 +186,6 @@ func (p *ProjectInteractor) GetProjectSupReport(input inputdata.GetProjectSupRep
 		return "", resProf.Err
 	}
 	report.ProfName = fmt.Sprint([]rune(resProf.Professor.Name)[0], ".", []rune(resProf.Professor.Middlename)[0], ". ", resProf.Professor.Surname)
-	report.ScienceDegree = resProf.Professor.ScienceDegree
-
-	ep, err := p.uniRepo.GetEducationalProgrammeFullById(fmt.Sprint(student.EducationalProgrammeId))
-	if err != nil {
-		return "", err
-	}
-	report.EdProgramme = ep.Name
-	report.Dept = ep.Dept
-	report.Faculty = ep.Faculty
 
 	template, err := template.New("./report.docx").ParseFiles("./report.docx")
 	if err != nil {

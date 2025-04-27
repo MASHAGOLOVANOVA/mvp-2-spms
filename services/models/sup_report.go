@@ -5,9 +5,9 @@ import domainaggregate "mvp-2-spms/domain-aggregate"
 type SupReport struct {
 	Faculty       string     //
 	Dept          string     //
-	StudentName   string     //
-	Course        string     //
-	EdProgramme   string     //
+	StudentNames  []string   //
+	Courses       []string   //
+	EdProgrammes  []string   //
 	Theme         string     //
 	Items         []Ctiteria //
 	Comment       string     //

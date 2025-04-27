@@ -15,6 +15,6 @@ type IMeetingInteractor interface {
 	DeleteSlot(profId int, slotId int, planner interfaces.IPlannerService) error
 	GetProfessorSlots(studId int, profId int, planner interfaces.IPlannerService, filter string) (outputdata.GetProfessorSlots, error)
 	GetStudentMeetings(studId int) (outputdata.GetStudentSlots, error)
-	GetProfessorStudentMeetings(profId int, planner interfaces.IPlannerService) (outputdata.GetStudentSlots, error)
+	GetProfessorStudentMeetings(profId int, planner interfaces.IPlannerService, input inputdata.GetProfessorMeetings) (outputdata.GetStudentSlots, error)
 	GetProfessorMeetings(input inputdata.GetProfessorMeetings, planner interfaces.IPlannerService) (outputdata.GetProfesorMeetings, error)
 }

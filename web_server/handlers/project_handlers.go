@@ -476,10 +476,15 @@ func (h *ProjectHandler) AddProject(w http.ResponseWriter, r *http.Request) {
 		drive = h.cloudDrives[models.CloudDriveName(driveInfo.Type)]
 	}
 
+	studentIDs := make([]uint, len(reqB.StudentIds))
+	for i, stid := range reqB.StudentIds {
+		parseUint, _ := strconv.ParseUint(stid, 10, 64)
+		studentIDs[i] = uint(parseUint)
+	}
 	input := inputdata.AddProject{
 		ProfessorId:         uint(id),
 		Theme:               reqB.Theme,
-		StudentId:           uint(reqB.StudentId),
+		StudentIds:          studentIDs,
 		Year:                uint(reqB.Year),
 		RepositoryOwnerName: reqB.RepoOwner,
 		RepositoryName:      reqB.RepositoryName,
@@ -553,7 +558,6 @@ func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		Id:                  int(projectId),
 		ProfessorId:         &id,
 		Theme:               reqB.Theme,
-		StudentId:           reqB.StudentId,
 		Year:                reqB.Year,
 		RepositoryOwnerName: reqB.RepoOwner,
 		RepositoryName:      reqB.RepositoryName,

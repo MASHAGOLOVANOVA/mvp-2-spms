@@ -12,6 +12,9 @@ type getApplicationData struct {
 	ProfessorId   string `json:"professor_id"`
 	StudentName   string `json:"student_name"`
 	ProfessorName string `json:"professor_name"`
+	StudentCourse int    `json:"student_course"`
+	StudentEdProg string `json:"student_ed_prog"`
+	StudentUni    string `json:"student_uni"`
 	Status        string `json:"status"`
 }
 
@@ -25,6 +28,9 @@ func MapToGetApplications(applEntities []GetApplicationEntities) GetApplications
 			StudentId:     applEntity.Student.Id,
 			ProfessorId:   applEntity.Professor.Id,
 			Status:        applEntity.Application.Status,
+			StudentCourse: int(applEntity.Student.Course),
+			StudentUni:    applEntity.Student.University,
+			StudentEdProg: applEntity.Student.EducationalProgramme,
 		}
 	}
 	return GetApplications{

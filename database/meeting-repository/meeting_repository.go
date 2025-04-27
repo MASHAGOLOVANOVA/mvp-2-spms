@@ -2,13 +2,11 @@ package meetingrepository
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"mvp-2-spms/database"
 	"mvp-2-spms/database/models"
 	entities "mvp-2-spms/domain-aggregate"
 	usecasemodels "mvp-2-spms/services/models"
-	"time"
-
-	"gorm.io/gorm"
 )
 
 type MeetingRepository struct {
@@ -183,22 +181,13 @@ func (r *MeetingRepository) AssignPlannerMeeting(meeting usecasemodels.PlannerMe
 	return err
 }
 
-func (r *MeetingRepository) GetProfessorMeetings(profId string, from time.Time, to time.Time) ([]entities.Meeting, error) {
-	var meetingsDb []models.Meeting
+func (r *MeetingRepository) GetProfessorMeetings(profId string) ([]entities.Slot, error) {
+	var meetingsDb []models.Slot
 
 	query := r.dbContext.DB.Select("*")
-	if to.IsZero() {
-		query = query.Where("professor_id = ? AND meeting_time > ?", profId, from)
-	} else {
-		query = query.Where("professor_id = ? AND meeting_time > ? AND meeting_time < ?", profId, from, to)
-	}
+	query = query.Where("professor_id = ? ", profId)
 
-	result := query.Order("meeting_time asc").Find(&meetingsDb)
-	if result.Error != nil {
-		return []entities.Meeting{}, result.Error
-	}
-
-	meetings := []entities.Meeting{}
+	meetings := []entities.Slot{}
 	for _, m := range meetingsDb {
 		meetings = append(meetings, m.MapToEntity())
 	}

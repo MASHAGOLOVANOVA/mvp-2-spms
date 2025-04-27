@@ -67,11 +67,9 @@ type Account struct {
 }
 
 type StudentAccount struct {
-	Id         string
-	Login      string
-	StudentId  string
-	EdProgName string
-	University string
+	Id        string
+	Login     string
+	StudentId string
 }
 
 type BaseIntegration struct {

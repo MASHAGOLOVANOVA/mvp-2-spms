@@ -14,7 +14,7 @@ type Account struct {
 }
 
 func (*Account) TableName() string {
-	return "user_account"
+	return "professor_account"
 }
 func (a *Account) MapToUseCaseModel() models.Account {
 	return models.Account{

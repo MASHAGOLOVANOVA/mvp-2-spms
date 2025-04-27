@@ -58,20 +58,8 @@ func (a *AccountInteractor) GetProfessorInfo(input inputdata.GetProfessorInfo) (
 		return outputdata.GetProfessorInfo{}, resProf.Err
 	}
 
-	uni, err := a.uniRepo.GetUniversityById(resProf.Professor.UniversityId)
-	if err != nil {
-		if !errors.Is(err, models.ErrUniNoFound) {
-			return outputdata.GetProfessorInfo{}, err
-		}
-		uni = entities.University{
-			Id:   "-1",
-			Name: "Университет неизвестен",
-			City: "-",
-		}
-	}
-
 	// add get account login
-	output := outputdata.MapToGetAccountInfo(resProf.Professor, uni)
+	output := outputdata.MapToGetAccountInfo(resProf.Professor)
 	return output, nil
 }
 
@@ -403,8 +391,6 @@ func (a *AccountInteractor) SignUp(input inputdata.SignUp) (outputdata.SignUp, e
 			Surname:    input.Surname,
 			Middlename: input.Middlename,
 		},
-		ScienceDegree: input.ScienceDegree,
-		UniversityId:  fmt.Sprint(input.UniId),
 	}
 
 	resChan := a.accountRepo.AddProfessor(prof)
@@ -439,8 +425,9 @@ func (a *AccountInteractor) StudentSignUp(input inputdata.StudentSignUp) (output
 			Surname:    input.Surname,
 			Middlename: input.Middlename,
 		},
-		Cource:                 input.Course,
-		EducationalProgrammeId: "1",
+		Course:               input.Course,
+		EducationalProgramme: input.EdProgName,
+		University:           input.University,
 	}
 
 	student, err := a.studentRepo.CreateStudent(student)
@@ -449,11 +436,9 @@ func (a *AccountInteractor) StudentSignUp(input inputdata.StudentSignUp) (output
 	}
 
 	studentAccount := models.StudentAccount{
-		Login:      input.Login,
-		StudentId:  student.Id,
-		Id:         student.Id,
-		EdProgName: input.EdProgName,
-		University: input.University,
+		Login:     input.Login,
+		StudentId: student.Id,
+		Id:        student.Id,
 	}
 
 	resChan1 := a.accountRepo.AddStudentAccount(studentAccount)

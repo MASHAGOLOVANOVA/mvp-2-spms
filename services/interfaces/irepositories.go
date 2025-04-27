@@ -4,7 +4,6 @@ import (
 	entities "mvp-2-spms/domain-aggregate"
 	"mvp-2-spms/services/models"
 	usecasemodels "mvp-2-spms/services/models"
-	"time"
 )
 
 type ResultAccount struct {
@@ -101,7 +100,7 @@ type IMeetingRepository interface {
 	DeleteSlot(slotId int) error
 	GetSlotById(slotId int) (entities.Slot, error)
 	AssignPlannerMeeting(plannerMeeting models.PlannerMeeting) error
-	GetProfessorMeetings(profId string, from time.Time, to time.Time) ([]entities.Meeting, error)
+	GetProfessorMeetings(profId string) ([]entities.Slot, error)
 	GetProfessorSlots(profId string, filter string) ([]entities.Slot, error)
 	GetStudentMeetings(studId string) ([]entities.StudMeeting, error)
 	GetProfessorStudentMeetings(profId string) ([]entities.StudMeeting, error)

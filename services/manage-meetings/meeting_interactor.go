@@ -12,7 +12,6 @@ import (
 	"mvp-2-spms/services/manage-meetings/inputdata"
 	"mvp-2-spms/services/manage-meetings/outputdata"
 	"mvp-2-spms/services/models"
-	"slices"
 	"strconv"
 	"time"
 
@@ -40,7 +39,7 @@ func InitMeetingInteractor(mtRepo interfaces.IMeetingRepository, accRepo interfa
 	}
 }
 
-func (m *MeetingInteractor) GetProfessorStudentMeetings(profId int, planner interfaces.IPlannerService) (outputdata.GetStudentSlots, error) {
+func (m *MeetingInteractor) GetProfessorStudentMeetings(profId int, planner interfaces.IPlannerService, input inputdata.GetProfessorMeetings) (outputdata.GetStudentSlots, error) {
 	slots, err := m.meetingRepo.GetProfessorStudentMeetings(strconv.Itoa(profId))
 	if err != nil {
 		return outputdata.GetStudentSlots{}, err
@@ -108,6 +107,17 @@ func (m *MeetingInteractor) GetProfessorStudentMeetings(profId int, planner inte
 				project, err = m.projectRepo.GetProjectById(projMeeting.ProjectId)
 			}
 
+			includeMeeting := true
+			if input.From != nil {
+				includeMeeting = includeMeeting && (startTime.After(*input.From) || startTime.Equal(*input.From))
+			}
+			if input.To != nil {
+				includeMeeting = includeMeeting && (endTime.Before(*input.To) || endTime.Equal(*input.To))
+			}
+
+			if includeMeeting {
+
+			}
 			slotsEntities := outputdata.GetStudentSlotsEntities{
 				StudMeeting:   slot,
 				Slot:          slotEntity,
@@ -495,7 +505,7 @@ func (m *MeetingInteractor) AddMeeting(input inputdata.AddMeeting, planner inter
 
 func (m *MeetingInteractor) GetProfessorMeetings(input inputdata.GetProfessorMeetings, planner interfaces.IPlannerService) (outputdata.GetProfesorMeetings, error) {
 	// get from db
-	meetings, err := m.meetingRepo.GetProfessorMeetings(fmt.Sprint(input.ProfessorId), input.From, input.To)
+	meetings, err := m.meetingRepo.GetProfessorMeetings(fmt.Sprint(input.ProfessorId))
 	if err != nil {
 		return outputdata.GetProfesorMeetings{}, err
 	}
@@ -512,10 +522,8 @@ func (m *MeetingInteractor) GetProfessorMeetings(input inputdata.GetProfessorMee
 		plannerFound = false
 	}
 
-	plannerMetingsIds := []string{}
 	if plannerFound {
-		//////////////////////////////////////////////////////////////////////////////////////////////////////
-		// check for access token first????????????????????????????????????????????
+		// check for access token first
 		token := &oauth2.Token{
 			RefreshToken: resPlanner.PlannerIntegration.ApiKey,
 		}
@@ -525,42 +533,44 @@ func (m *MeetingInteractor) GetProfessorMeetings(input inputdata.GetProfessorMee
 			return outputdata.GetProfesorMeetings{}, err
 		}
 
-		plannerMetingsIds, err = planner.GetScheduleMeetingIds(input.From, resPlanner.PlannerIntegration)
-		if err != nil {
-			return outputdata.GetProfesorMeetings{}, err
-		}
-	}
-
-	for _, meet := range meetings {
-		student, err := m.studentRepo.GetStudentById(meet.ParticipantId)
-		if err != nil {
-			return outputdata.GetProfesorMeetings{}, err
-		}
-
-		proj, err := m.projectRepo.GetStudentCurrentProject(meet.ParticipantId)
-		if err != nil {
-			if !errors.Is(err, models.ErrStudentHasNoCurrentProject) {
+		for _, meet := range meetings {
+			meeting, err := planner.FindMeetingById(meet.EventId, resPlanner.PlannerIntegration)
+			if err != nil {
 				return outputdata.GetProfesorMeetings{}, err
 			}
-			proj = domainaggregate.Project{} // change to nil
-		}
 
-		// getting planner meeting id
-		plannerId, err := m.meetingRepo.GetMeetingPlannerId(meet.Id)
-		if err != nil {
-			return outputdata.GetProfesorMeetings{}, err
-		}
+			// Skip if meeting times are nil
+			if meeting.Start == nil || meeting.End == nil {
+				continue
+			}
 
-		// check if meeting exists in planner
-		hasPlanner := slices.Contains(plannerMetingsIds, plannerId)
-		meetEntities = append(meetEntities, outputdata.GetProfesorMeetingsEntities{
-			Meeting:           meet,
-			Student:           student,
-			Project:           proj,
-			HasPlannerMeeting: hasPlanner,
-		})
+			// Parse meeting times
+			meetingStart, err := time.Parse(time.RFC3339, meeting.Start.DateTime)
+			if err != nil {
+				return outputdata.GetProfesorMeetings{}, err
+			}
+
+			meetingEnd, err := time.Parse(time.RFC3339, meeting.End.DateTime)
+			if err != nil {
+				return outputdata.GetProfesorMeetings{}, err
+			}
+
+			// Check if meeting falls within the requested time range
+			includeMeeting := true
+			if input.From != nil {
+				includeMeeting = includeMeeting && (meetingStart.After(*input.From) || meetingStart.Equal(*input.From))
+			}
+			if input.To != nil {
+				includeMeeting = includeMeeting && (meetingEnd.Before(*input.To) || meetingEnd.Equal(*input.To))
+			}
+
+			if includeMeeting {
+				// TODO: You need to define how to get student, proj, and hasPlanner
+				meetEntities = append(meetEntities, outputdata.GetProfesorMeetingsEntities{})
+			}
+		}
 	}
 
-	output := outputdata.MapToGetProfesorMeetings(meetEntities)
-	return output, nil
+	// Return the final output
+	return outputdata.MapToGetProfesorMeetings(meetEntities), nil
 }

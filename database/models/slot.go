@@ -13,6 +13,7 @@ type Slot struct {
 	ProfessorId uint   `gorm:"column:professor_id"`
 	IsOnline    bool   `gorm:"column:is_online"`
 	PlannerId   string `gorm:"column:planner_id"`
+	Status      int    `gorm:"column:status"`
 }
 
 func (*Slot) TableName() string {
@@ -38,4 +39,5 @@ func (pj *Slot) MapEntityToThis(entity entities.Slot, plannerId string) {
 	pj.ProfessorId = uint(prId)
 	pj.IsOnline = entity.IsOnline
 	pj.PlannerId = plannerId
+	pj.Status = 0
 }

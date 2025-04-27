@@ -1,13 +1,11 @@
 package inputdata
 
 type SignUp struct {
-	Login         string
-	Password      string
-	Name          string
-	Surname       string
-	Middlename    string
-	ScienceDegree string
-	UniId         int
+	Login      string
+	Password   string
+	Name       string
+	Surname    string
+	Middlename string
 }
 
 type StudentSignUp struct {

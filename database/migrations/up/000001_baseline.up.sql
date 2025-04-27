@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS
         surname VARCHAR(50) NOT NULL,
         middlename VARCHAR(50) NOT NULL,
         enrollment_year INT UNSIGNED NOT NULL,
-        univerity VARCHAR(250),
+        university VARCHAR(250),
         ed_program VARCHAR(250),
         PRIMARY KEY(id)
     );

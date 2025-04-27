@@ -8,6 +8,7 @@ import (
 	"mvp-2-spms/database/models"
 	entities "mvp-2-spms/domain-aggregate"
 	usecasemodels "mvp-2-spms/services/models"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -31,7 +32,16 @@ func (r *ProjectRepository) GetProfessorProjectsWithFilters(profId string, statu
 	projects := []entities.Project{}
 	for _, pj := range projectsDb {
 		// вынести в маппер
-		projects = append(projects, pj.MapToEntity())
+		var participations []models.ProjectParticipation
+		res := r.dbContext.DB.Select("*").Where("project_id = ?", pj.Id).Find(&participations)
+		if res.Error != nil {
+			return []entities.Project{}, result.Error
+		}
+		var studentIds []string
+		for _, p := range participations {
+			studentIds = append(studentIds, strconv.FormatUint(uint64(p.StudentId), 10))
+		}
+		projects = append(projects, pj.MapToEntity(studentIds))
 	}
 	return projects, nil
 }
@@ -45,27 +55,24 @@ func (r *ProjectRepository) GetProfessorProjects(profId string) ([]entities.Proj
 	projects := []entities.Project{}
 	for _, pj := range projectsDb {
 		// вынести в маппер
-		projects = append(projects, pj.MapToEntity())
+		var participations []models.ProjectParticipation
+		res := r.dbContext.DB.Select("id").Where("project_id = ?", pj.Id).Find(&participations)
+		if res.Error != nil {
+			return []entities.Project{}, result.Error
+		}
+		var studentIds []string
+		for _, p := range participations {
+			studentIds = append(studentIds, strconv.FormatUint(uint64(p.StudentId), 10))
+		}
+		projects = append(projects, pj.MapToEntity(studentIds))
 	}
 	return projects, nil
 }
 
 func (r *ProjectRepository) GetProjectRepository(projId string) (usecasemodels.Repository, error) {
-	var project models.Project
-	result := r.dbContext.DB.Select("repo_id").Where("id = ?", projId).Take(&project)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return usecasemodels.Repository{}, usecasemodels.ErrProjectNotFound
-		}
-		return usecasemodels.Repository{}, result.Error
-	}
-
-	if !project.RepoId.Valid {
-		return usecasemodels.Repository{}, usecasemodels.ErrProjectRepoNotFound
-	}
 
 	var repo models.Repository
-	result = r.dbContext.DB.Select("*").Where("id = ?", project.RepoId).Take(&repo)
+	result := r.dbContext.DB.Select("*").Where("project_id = ?", projId).Take(&repo)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return usecasemodels.Repository{}, usecasemodels.ErrProjectRepoNotFound
@@ -85,7 +92,18 @@ func (r *ProjectRepository) GetProjectById(projId string) (entities.Project, err
 		}
 		return entities.Project{}, result.Error
 	}
-	return project.MapToEntity(), nil
+
+	var participations []models.ProjectParticipation
+	res := r.dbContext.DB.Select("*").Where("project_id = ?", project.Id).Find(&participations)
+	if res.Error != nil {
+		return entities.Project{}, result.Error
+	}
+	var studentIds []string
+	for _, p := range participations {
+		studentIds = append(studentIds, strconv.FormatUint(uint64(p.StudentId), 10))
+	}
+
+	return project.MapToEntity(studentIds), nil
 }
 
 func (r *ProjectRepository) CreateProject(project entities.Project) (entities.Project, error) {
@@ -96,7 +114,18 @@ func (r *ProjectRepository) CreateProject(project entities.Project) (entities.Pr
 	if result.Error != nil {
 		return entities.Project{}, result.Error
 	}
-	return dbProject.MapToEntity(), nil
+
+	var participations []models.ProjectParticipation
+	res := r.dbContext.DB.Select("*").Where("project_id = ?", dbProject.Id).Find(&participations)
+	if res.Error != nil {
+		return entities.Project{}, result.Error
+	}
+	var studentIds []string
+	for _, p := range participations {
+		studentIds = append(studentIds, strconv.FormatUint(uint64(p.StudentId), 10))
+	}
+
+	return dbProject.MapToEntity(studentIds), nil
 }
 
 func (r *ProjectRepository) CreateProjectWithRepository(project entities.Project, repo usecasemodels.Repository) (usecasemodels.ProjectInRepository, error) {
@@ -107,16 +136,34 @@ func (r *ProjectRepository) CreateProjectWithRepository(project entities.Project
 	dbProject.MapEntityToThis(project)
 
 	err := r.dbContext.DB.Transaction(func(tx *gorm.DB) error {
-		result := tx.Create(&dbRepo)
+
+		result := tx.Create(&dbProject)
 		if result.Error != nil {
 			return result.Error
 		}
 
-		dbProject.RepoId = sql.NullInt64{Int64: int64(dbRepo.Id), Valid: true}
-
-		result = tx.Create(&dbProject)
+		dbRepo.ProjectId = int(dbProject.Id)
+		result = tx.Create(&dbRepo)
 		if result.Error != nil {
 			return result.Error
+		}
+
+		participations := make([]models.ProjectParticipation, 0, len(project.StudentIds))
+		for _, studentId := range project.StudentIds {
+			parsedID, err := strconv.ParseUint(studentId, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			participations = append(participations, models.ProjectParticipation{
+				ProjectId: dbProject.Id,
+				StudentId: uint(parsedID),
+			})
+		}
+		if len(participations) > 0 {
+			if err := tx.Create(&participations).Error; err != nil {
+				return fmt.Errorf("failed to create participations: %w", err)
+			}
 		}
 
 		return nil
@@ -126,7 +173,7 @@ func (r *ProjectRepository) CreateProjectWithRepository(project entities.Project
 		return usecasemodels.ProjectInRepository{}, err
 	}
 	return usecasemodels.ProjectInRepository{
-		Project: dbProject.MapToEntity(),
+		Project: dbProject.MapToEntity(project.StudentIds),
 	}, nil
 }
 
@@ -199,7 +246,18 @@ func (r *ProjectRepository) GetStudentCurrentProject(studId string) (entities.Pr
 		}
 		return entities.Project{}, result.Error
 	}
-	return proj.MapToEntity(), nil
+
+	var participations []models.ProjectParticipation
+	res := r.dbContext.DB.Select("id").Where("project_id = ?", proj.Id).Find(&participations)
+	if res.Error != nil {
+		return entities.Project{}, result.Error
+	}
+	var studentIds []string
+	for _, p := range participations {
+		studentIds = append(studentIds, strconv.FormatUint(uint64(p.StudentId), 10))
+	}
+
+	return proj.MapToEntity(studentIds), nil
 }
 
 func (r *ProjectRepository) GetProjectGradingById(projId string) (entities.ProjectGrading, error) {
@@ -269,8 +327,8 @@ func (r *ProjectRepository) GetProjectMeetingInfoById(projId string) (usecasemod
 
 	result := r.dbContext.DB.Raw(`
 	SELECT COUNT(id) as count
-	FROM meeting
-	WHERE project_id = ? and status = 1`, projId).Scan(&meetCount)
+	FROM project_meeting
+	WHERE project_id = ?`, projId).Scan(&meetCount)
 	if result.Error != nil {
 		return usecasemodels.MeetingInfo{}, result.Error
 	}

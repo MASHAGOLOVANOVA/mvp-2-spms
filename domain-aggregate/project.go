@@ -27,7 +27,7 @@ type Project struct {
 	Id           string
 	Theme        string
 	SupervisorId string
-	StudentId    string
+	StudentIds   []string
 	Year         uint
 	Stage        ProjectStage
 	Status       ProjectStatus

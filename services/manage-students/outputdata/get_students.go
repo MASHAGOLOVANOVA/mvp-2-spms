@@ -21,7 +21,7 @@ func MapToGetStudents(studentEntities []GetStudentsEntities) GetStudents {
 				Surname:              studenttEntitiy.Student.Surname,
 				Middlename:           studenttEntitiy.Student.Middlename,
 				EducationalProgramme: studenttEntitiy.EducationalProgramme,
-				Cource:               int(studenttEntitiy.Student.Cource),
+				Cource:               int(studenttEntitiy.Student.Course),
 				PtojectTheme:         studenttEntitiy.ProjectTheme,
 				PtojectId:            pid,
 			})

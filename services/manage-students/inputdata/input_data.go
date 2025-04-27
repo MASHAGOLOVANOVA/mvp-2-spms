@@ -1,7 +1,6 @@
 package inputdata
 
 import (
-	"fmt"
 	entities "mvp-2-spms/domain-aggregate"
 )
 
@@ -25,7 +24,5 @@ func (as AddStudent) MapToStudentEntity() entities.Student {
 			Surname:    as.Surname,
 			Middlename: as.Middlename,
 		},
-		EducationalProgrammeId: fmt.Sprint(as.EducationalProgrammeId),
-		Cource:                 as.Cource,
 	}
 }

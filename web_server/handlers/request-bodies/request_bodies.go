@@ -13,11 +13,9 @@ type CredentialsBot struct {
 
 type SignUp struct {
 	Credentials
-	Name          string `json:"name"`
-	Surname       string `json:"surname"`
-	Middlename    string `json:"middlename"`
-	ScienceDegree string `json:"science_degree"`
-	UniversityId  int    `json:"university_id"`
+	Name       string `json:"name"`
+	Surname    string `json:"surname"`
+	Middlename string `json:"middlename"`
 }
 
 type StudentSignUp struct {
@@ -59,11 +57,11 @@ type AddSlot struct {
 }
 
 type AddProject struct {
-	Theme          string `json:"theme"`
-	StudentId      int    `json:"student_id"`
-	Year           int    `json:"year"`
-	RepoOwner      string `json:"repository_owner_login"`
-	RepositoryName string `json:"repository_name"`
+	Theme          string   `json:"theme"`
+	StudentIds     []string `json:"student_ids"`
+	Year           int      `json:"year"`
+	RepoOwner      string   `json:"repository_owner_login"`
+	RepositoryName string   `json:"repository_name"`
 }
 
 type UpdateProject struct {

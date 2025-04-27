@@ -22,8 +22,9 @@ func MapToGetProfesorMeetings(meetings []GetProfesorMeetingsEntities) GetProfeso
 				Description: meet.Meeting.Description,
 				MeetingTime: meet.Meeting.Time,
 				Participant: getProfMeetingsParticipantData{
-					FullName:     meet.Student.FullNameToString(),
-					Cource:       meet.Student.Cource,
+					FullName: meet.Student.FullNameToString(),
+					Cource:   meet.Student.Course,
+
 					ProjectTheme: meet.Project.Theme,
 					ProjectId:    projId,
 				},

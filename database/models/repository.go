@@ -10,6 +10,7 @@ type Repository struct {
 	OwnerName   string `gorm:"column:owner_name"`
 	IsPublic    bool   `gorm:"column:is_public"`
 	RepoHubType int    `gorm:"column:repo_hub_type"`
+	ProjectId   int    `gorm:"column:project_id"`
 }
 
 func (Repository) TableName() string {
@@ -20,6 +21,7 @@ func (r Repository) MapToUseCaseModel() models.Repository {
 	return models.Repository{
 		RepoId:    r.Name,
 		OwnerName: r.OwnerName,
+		ProjectId: r.ProjectId,
 	}
 }
 
@@ -28,4 +30,5 @@ func (r *Repository) MapModelToThis(model models.Repository) {
 	r.OwnerName = model.OwnerName
 	r.IsPublic = true
 	r.RepoHubType = model.RepoType
+	r.ProjectId = model.ProjectId
 }

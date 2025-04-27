@@ -53,15 +53,10 @@ func (p *StudentInteractor) GetStudents(input inputdata.GetStudents) (outputdata
 			project = domainaggregate.Project{} // поменять на нил
 		}
 
-		edProg, err := p.uniRepo.GetEducationalProgrammeById(student.EducationalProgrammeId)
-		if err != nil {
-			return outputdata.GetStudents{}, err
-		}
-
 		stEntities = append(stEntities, outputdata.GetStudentsEntities{
 			ProjectTheme:         project.Theme,
 			Student:              student,
-			EducationalProgramme: edProg.Name,
+			EducationalProgramme: student.EducationalProgramme,
 			PtojectId:            project.Id,
 		})
 	}

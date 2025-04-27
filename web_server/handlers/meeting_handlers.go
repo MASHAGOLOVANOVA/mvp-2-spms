@@ -176,7 +176,7 @@ func (h *MeetingHandler) GetProfessorStudentMeetings(w http.ResponseWriter, r *h
 		planner = h.planners[models.PlannerName(calendarInfo.Type)]
 	}
 
-	slots, err := h.meetingInteractor.GetProfessorStudentMeetings(id, planner)
+	slots, err := h.meetingInteractor.GetProfessorStudentMeetings(id, planner, minputdata.GetProfessorMeetings{})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(err.Error()); err != nil {
@@ -747,7 +747,7 @@ func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Req
 
 	input := minputdata.GetProfessorMeetings{
 		ProfessorId: uint(id),
-		From:        from,
+		From:        &from,
 	}
 
 	toStr := r.URL.Query().Get("to")
@@ -760,7 +760,7 @@ func (h *MeetingHandler) GetProfessorMeetings(w http.ResponseWriter, r *http.Req
 			}
 			return
 		}
-		input.To = to
+		input.To = &to
 	}
 
 	integInput := ainputdata.GetPlannerIntegration{

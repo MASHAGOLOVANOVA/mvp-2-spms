@@ -3,14 +3,13 @@ package domainaggregate
 type Student struct {
 	Person
 	//EnrollmentYear uint
-	EducationalProgrammeId string
-	Cource                 uint
+	EducationalProgramme string
+	Course               uint
+	University           string
 }
 
 type StudentAccount struct {
-	Id         string
-	Login      string
-	StudentId  string
-	University string
-	EdProgName string
+	Id        string
+	Login     string
+	StudentId string
 }

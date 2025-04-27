@@ -4,6 +4,7 @@ import (
 	"fmt"
 	entities "mvp-2-spms/domain-aggregate"
 	"mvp-2-spms/services/models"
+	"strconv"
 	"time"
 )
 
@@ -37,7 +38,7 @@ type GetProjectStatsById struct {
 type AddProject struct {
 	ProfessorId         uint
 	Theme               string
-	StudentId           uint
+	StudentIds          []uint
 	Year                uint
 	RepositoryOwnerName string
 	RepositoryName      string
@@ -47,7 +48,6 @@ type UpdateProject struct {
 	Id                  int
 	ProfessorId         *int
 	Theme               *string
-	StudentId           *int
 	Year                *int
 	RepositoryOwnerName *string
 	RepositoryName      *string
@@ -65,9 +65,6 @@ func (as UpdateProject) UpdateProjectEntity(p *entities.Project) error {
 	if as.Status != nil {
 		p.Status = entities.ProjectStatus(*as.Status)
 	}
-	if as.StudentId != nil {
-		p.StudentId = fmt.Sprint(*as.StudentId)
-	}
 	if as.Theme != nil {
 		p.Theme = *as.Theme
 	}
@@ -78,10 +75,16 @@ func (as UpdateProject) UpdateProjectEntity(p *entities.Project) error {
 }
 
 func (as AddProject) MapToProjectEntity() entities.Project {
+	// Convert []uint StudentIds to []string
+	studentIds := make([]string, len(as.StudentIds))
+	for i, id := range as.StudentIds {
+		studentIds[i] = strconv.FormatUint(uint64(id), 10)
+	}
+
 	return entities.Project{
 		Theme:        as.Theme,
-		SupervisorId: fmt.Sprint(as.ProfessorId),
-		StudentId:    fmt.Sprint(as.StudentId),
+		SupervisorId: strconv.FormatUint(uint64(as.ProfessorId), 10),
+		StudentIds:   studentIds, // Now properly []string
 		Year:         as.Year,
 		Stage:        entities.ProjectStage(entities.Analysis),
 		Status:       entities.ProjectStatus(entities.ProjectInProgress),
